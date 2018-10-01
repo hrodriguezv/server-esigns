@@ -258,8 +258,7 @@ public class MessageHandler implements IMessageHandler {
 		}
 		catch (IOException e) {
 			logger.error(
-				"Error building JSON Object: [" + e.getMessage() + "]");
-			e.printStackTrace();
+				"Error building JSON Object: [" + e.getMessage() + "]", e);
 		}
 		post.setStrokedDocEncoded(
 			Base64.getEncoder().encodeToString(strokedFile));
@@ -271,8 +270,7 @@ public class MessageHandler implements IMessageHandler {
 			}
 			catch (IOException e) {
 				logger.error(
-					"Error building JSON Object: [" + e.getMessage() + "]");
-				e.printStackTrace();
+					"Error building JSON Object: [" + e.getMessage() + "]", e);
 			}
 		}
 		post.setStrokes(strokeList.toArray(new String[0]));
@@ -284,8 +282,7 @@ public class MessageHandler implements IMessageHandler {
 			}
 			catch (IOException e) {
 				logger.error(
-					"Error building JSON Object: [" + e.getMessage() + "]");
-				e.printStackTrace();
+					"Error building JSON Object: [" + e.getMessage() + "]", e);
 			}
 		}
 		post.setImages(imgList.toArray(new String[0]));
@@ -297,8 +294,7 @@ public class MessageHandler implements IMessageHandler {
 		}
 		catch (IOException e) {
 			logger.error(
-				"Error building JSON Object: [" + e.getMessage() + "]");
-			e.printStackTrace();
+				"Error building JSON Object: [" + e.getMessage() + "]", e);
 		}
 		post.setSignedDocEncoded(
 			Base64.getEncoder().encodeToString(eSignedFile));
