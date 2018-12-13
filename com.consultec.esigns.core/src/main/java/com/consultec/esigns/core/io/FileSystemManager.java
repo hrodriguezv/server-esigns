@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+
 import com.consultec.esigns.core.util.PropertiesManager;
 
 /**
@@ -21,13 +23,12 @@ import com.consultec.esigns.core.util.PropertiesManager;
 public class FileSystemManager {
 
 	/** The Constant IMAGE_SRC_EXT. */
-	final static String IMAGE_SRC_EXT =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
+	final static String IMAGE_SRC_EXT = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
 
 	/** The Constant TEXT_SRC_EXT. */
-	final static String TEXT_SRC_EXT = PropertiesManager.getInstance().getValue(
-		PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
+	final static String TEXT_SRC_EXT = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
 
 	/** The user home. */
 	private File userHome;
@@ -62,6 +63,8 @@ public class FileSystemManager {
 	/** The session id. */
 	private String sessionId;
 
+	private File serializedObjectRef;
+
 	/**
 	 * Instantiates a new file system manager.
 	 */
@@ -90,88 +93,67 @@ public class FileSystemManager {
 	/**
 	 * Inits and check consistency of local workspace.
 	 *
-	 * @param str
-	 *            the str
-	 * @throws FileNotFoundException
-	 *             the file not found exception
+	 * @param id the str
+	 * @throws FileNotFoundException the file not found exception
 	 */
-	public void init(String str)
-		throws FileNotFoundException {
+	public void init(String id) throws FileNotFoundException {
 
 		PropertiesManager pref = PropertiesManager.getInstance();
-		String pathHome =
-			pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+		String pathHome = pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
 		File homeDir = new File(pathHome);
-		instance.sessionId = str;
-		instance.userHome = new File(homeDir, str);
+		instance.sessionId = id;
+		instance.userHome = new File(homeDir, id);
 
 		if (!instance.userHome.exists()) {
 			throw new FileNotFoundException("User home folder doesn't exist!");
 		}
 
-		instance.certificate = new File(
-			pref.getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
-		if (!instance.certificate.exists()) {
-			throw new FileNotFoundException("Certificate doesn't exist!");
-		}
+		instance.certificate = new File(pref.getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
 
-		instance.pdfDocument = new File(
-			instance.userHome,
-			pref.getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
+		instance.pdfDocument = new File(instance.userHome,
+				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
 		if (!instance.pdfDocument.exists()) {
-			throw new FileNotFoundException(
-				"PDF Document to sign doesn't exist!");
+			throw new FileNotFoundException("PDF Document to sign doesn't exist!");
 		}
 
-		instance.pdfStrokedDoc = new File(
-			instance.userHome,
-			pref.getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT));
+		instance.pdfStrokedDoc = new File(instance.userHome,
+				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT));
 
-		instance.pdfEsignedDoc = new File(
-			instance.userHome, pref.getValue(
-				PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
+		instance.pdfEsignedDoc = new File(instance.userHome,
+				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
 
 		instance.imgStrokeFiles = new ArrayList<File>();
 		instance.textStrokeFiles = new ArrayList<File>();
+		instance.serializedObjectRef = new File(instance.userHome, "ref.ser");
 	}
 
 	/**
 	 * Check consistency.
 	 *
-	 * @param sessionId
-	 *            the session id
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
+	 * @param sessionId the session id
+	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public void checkConsistency(String sessionId)
-		throws IOException {
+	public void checkConsistency(String sessionId) throws IOException {
 
 		if (!instance.sessionId.equals(sessionId))
-			throw new IllegalStateException(
-				"Inconsistency in FileSystem != sessionId");
+			throw new IllegalStateException("Inconsistency in FileSystem != sessionId");
 
 		if (!instance.userHome.exists()) {
 			throw new FileNotFoundException("User home folder doesn't exist!");
 		}
 
 		instance.certificate = new File(
-			PropertiesManager.getInstance().getValue(
-				PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
-		if (!instance.certificate.exists()) {
-			throw new FileNotFoundException("Certificate doesn't exist!");
-		}
+				PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
 
-		instance.pdfDocument = new File(
-			instance.userHome, PropertiesManager.getInstance().getValue(
-				PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
+		instance.pdfDocument = new File(instance.userHome,
+				PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
+
 		if (!instance.pdfDocument.exists()) {
-			throw new FileNotFoundException(
-				"PDF Document to sign doesn't exist!");
+			throw new FileNotFoundException("PDF Document to sign doesn't exist!");
 		}
 
 		if (!instance.pdfStrokedDoc.exists()) {
-			throw new FileNotFoundException(
-				"PDF Document to sign doesn't exist!");
+			throw new FileNotFoundException("PDF Document to sign doesn't exist!");
 		}
 
 		File[] images = instance.userHome.listFiles(new FilenameFilter() {
@@ -198,6 +180,45 @@ public class FileSystemManager {
 	}
 
 	/**
+	 * Delete on exit.
+	 */
+	public void deleteOnExit(Boolean doIt) {
+
+		if (doIt) {
+			if ((instance.pdfDocument != null) && (instance.pdfDocument.exists()))
+				instance.pdfDocument.delete();
+			if ((instance.pdfEsignedDoc != null) && (instance.pdfEsignedDoc.exists()))
+				instance.pdfEsignedDoc.delete();
+			if ((instance.pdfEsignedStampedDoc != null) && (instance.pdfEsignedStampedDoc.exists()))
+				instance.pdfEsignedStampedDoc.delete();
+			if ((instance.pdfStrokedDoc != null) && (instance.pdfStrokedDoc.exists()))
+				instance.pdfStrokedDoc.delete();
+
+			for (File file : imgStrokeFiles) {
+				file.delete();
+			}
+
+			for (File file : textStrokeFiles) {
+				file.delete();
+			}
+
+			if ((instance.serializedObjectRef!= null) && (instance.serializedObjectRef.exists()))
+				instance.serializedObjectRef.delete();
+
+			if ((instance.userHome != null) && (instance.userHome.exists()))
+				instance.userHome.delete();
+		}
+	}
+
+	public void serializeObjectFile(Object ref) throws IOException {
+		FileUtils.writeByteArrayToFile(instance.serializedObjectRef, StreamHelper.toStream(ref));
+	}
+	
+	public Object deserializeObject() throws IOException {
+		return StreamHelper.fromStream(FileUtils.readFileToByteArray(instance.serializedObjectRef));
+	}
+	
+	/**
 	 * Gets the pdf document.
 	 *
 	 * @return the pdf document
@@ -210,8 +231,7 @@ public class FileSystemManager {
 	/**
 	 * Adds the img signature file.
 	 *
-	 * @param e
-	 *            the e
+	 * @param e the e
 	 */
 	public void addImgStrokeFile(File e) {
 
@@ -221,8 +241,7 @@ public class FileSystemManager {
 	/**
 	 * Adds the text signature file.
 	 *
-	 * @param e
-	 *            the e
+	 * @param e the e
 	 */
 	public void addTextStrokeFile(File e) {
 
@@ -252,44 +271,11 @@ public class FileSystemManager {
 	/**
 	 * Sets the pdf stroked doc.
 	 *
-	 * @param pdfStrokedDoc
-	 *            the new pdf stroked doc
+	 * @param pdfStrokedDoc the new pdf stroked doc
 	 */
 	public void setPdfStrokedDoc(File pdfStrokedDoc) {
 
 		this.pdfStrokedDoc = pdfStrokedDoc;
-	}
-
-	/**
-	 * Delete on exit.
-	 */
-	public void deleteOnExit(Boolean doIt) {
-
-		if (doIt) {
-			if ((instance.pdfDocument != null) &&
-				(instance.pdfDocument.exists()))
-				instance.pdfDocument.delete();
-			if ((instance.pdfEsignedDoc != null) &&
-				(instance.pdfEsignedDoc.exists()))
-				instance.pdfEsignedDoc.delete();
-			if ((instance.pdfEsignedStampedDoc != null) &&
-				(instance.pdfEsignedStampedDoc.exists()))
-				instance.pdfEsignedStampedDoc.delete();
-			if ((instance.pdfStrokedDoc != null) &&
-				(instance.pdfStrokedDoc.exists()))
-				instance.pdfStrokedDoc.delete();
-
-			for (File file : imgStrokeFiles) {
-				file.delete();
-			}
-
-			for (File file : textStrokeFiles) {
-				file.delete();
-			}
-
-			if ((instance.userHome != null) && (instance.userHome.exists()))
-				instance.userHome.delete();
-		}
 	}
 
 	/**
@@ -340,5 +326,9 @@ public class FileSystemManager {
 	public File getPdfEsignedDoc() {
 
 		return pdfEsignedDoc;
+	}
+
+	public File getSerializedObjectRef() {
+		return serializedObjectRef;
 	}
 }
