@@ -3,7 +3,6 @@
  */
 package com.consultec.esigns.core.queue;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Interface IMessageHandler.
  *
