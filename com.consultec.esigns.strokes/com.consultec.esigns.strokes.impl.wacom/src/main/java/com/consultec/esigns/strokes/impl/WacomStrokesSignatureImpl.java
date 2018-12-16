@@ -5,7 +5,7 @@
 package com.consultec.esigns.strokes.impl;
 
 import com.consultec.esigns.strokes.SignaturePadVendor;
-import com.consultec.esigns.strokes.api.IStrokeSignature;
+import com.consultec.esigns.strokes.api.IStrokeSignatureLicensed;
 import com.consultec.esigns.strokes.io.FeatureNotImplemented;
 import com.florentis.signature.DynamicCapture;
 import com.florentis.signature.SigCtl;
@@ -16,7 +16,7 @@ import com.florentis.signature.SigObj;
  *
  * @author hrodriguez
  */
-public class WacomStrokesSignatureImpl implements IStrokeSignature {
+public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
 
 	/** The sig ctl. */
 	private SigCtl sigCtl;
@@ -41,7 +41,6 @@ public class WacomStrokesSignatureImpl implements IStrokeSignature {
 	 * Instantiates a new wacom strokes signature impl.
 	 */
 	public WacomStrokesSignatureImpl() {
-
 		sigCtl = new SigCtl();
 		dc = new DynamicCapture();
 	}
@@ -154,9 +153,13 @@ public class WacomStrokesSignatureImpl implements IStrokeSignature {
 	 */
 	@Override
 	public void setParameters(String author, String reason, String location) {
-
 		this.author = author;
 		this.location = location;
 		this.reason = reason;
+	}
+
+	@Override
+	public void setLicense(String key) {
+		sigCtl.licence(key);
 	}
 }
