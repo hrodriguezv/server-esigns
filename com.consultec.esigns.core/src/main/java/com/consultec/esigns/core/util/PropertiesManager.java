@@ -27,7 +27,7 @@ public class PropertiesManager {
 
 	/** The default prop file path. */
 	public static String DEFAULT_PROP_FILE_PATH =
-		"com/consultec/esigns/resources/";
+		"";
 
 	/** The default message bundle. */
 	public static String DEFAULT_MESSAGE_BUNDLE =
@@ -67,7 +67,7 @@ public class PropertiesManager {
 	/** The Constant PROPERTY_OPERATOR_CERTIFICATE. */
 	public static final String PROPERTY_OPERATOR_CERTIFICATE =
 		"operator.default.certificate";
-	public static final String PASSWORD_OPERATOR_CERTIFICATE =
+	public static final String KEY_OPERATOR_CERTIFICATE =
 		"operator.password.certificate";
 
 	/** The Constant QUEUE_SERVER_NAME. */

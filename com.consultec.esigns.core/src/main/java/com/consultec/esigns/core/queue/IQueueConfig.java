@@ -7,7 +7,6 @@ import javax.jms.ConnectionFactory;
 
 import org.springframework.jms.config.JmsListenerContainerFactory;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Interface IQueueConfig.
  *
