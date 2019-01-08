@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
+import com.consultec.esigns.core.events.EventLogger;
 import com.consultec.esigns.core.util.PropertiesManager;
 
 /**
@@ -34,6 +35,8 @@ public class ServerApp {
 	public static void main(String[] args) throws IOException, TimeoutException {
 		@SuppressWarnings("unused")
 		ApplicationContext context = SpringApplication.run(ServerApp.class, args);
+		EventLogger.getInstance().init();
+		EventLogger.getInstance().info("Se ha iniciado correctamente el Servicio de registro de firmas electronicas");
 		logger.info("ServerApp listener started ...");
 	}
 
