@@ -10,24 +10,33 @@ import java.security.cert.Certificate;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
+import com.consultec.esigns.core.events.EventLogger;
 import com.consultec.esigns.core.io.FileSystemManager;
 import com.consultec.esigns.core.io.IOUtility;
-import com.consultec.esigns.core.model.PayloadTO;
-import com.consultec.esigns.core.model.PayloadTO.Stage;
 import com.consultec.esigns.core.queue.IMessageHandler;
 import com.consultec.esigns.core.security.KeyStoreAccessMode;
 import com.consultec.esigns.core.security.SecurityHelper;
+import com.consultec.esigns.core.transfer.PayloadTO;
+import com.consultec.esigns.core.transfer.PayloadTO.Stage;
 import com.consultec.esigns.core.util.InetUtility;
 import com.consultec.esigns.core.util.MQUtility;
 import com.consultec.esigns.core.util.PDFSignatureUtil;
@@ -47,55 +56,43 @@ import com.pheox.jcapi.JCAPISystemStoreRegistryLocation;
 public class MessageHandler implements IMessageHandler {
 
 	/** The Constant logger. */
-	private static final Logger logger =
-		LoggerFactory.getLogger(MessageHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
 
 	/** The Constant PDFVIEWER_EXECPATH. */
-	private static final String PDFVIEWER_EXECPATH =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_ICEPDF_PATH);
+	private static final String PDFVIEWER_EXECPATH = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_ICEPDF_PATH);
 
 	/** The Constant PDFVIEWER_EXECDEP. */
-	private static final String PDFVIEWER_EXECDEP =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_ICEPDF_DLLS);
+	private static final String PDFVIEWER_EXECDEP = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_ICEPDF_DLLS);
 
 	/**
 	 * Command simplified line.
 	 *
-	 * @param id
-	 *            the id
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
+	 * @param id the id
+	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	private void commandSimplifiedLine(String id)
-		throws IOException {
+	private void commandSimplifiedLine(String id) throws IOException {
 
-		String[] cmd = {
-			"java", "-Djava.library.path=\"" + PDFVIEWER_EXECDEP + "\";",
-			"-jar", "icepdf-viewer-6.3.1-SNAPSHOT.jar", "-sessionid", id
-		};
+		String cmmd = ("java -Djava.library.path=\"" + PDFVIEWER_EXECDEP + "\""
+				+ " -jar icepdf-viewer-6.3.1-SNAPSHOT.jar -sessionid " + id);
 		BufferedReader input = null;
 		try {
-			Process p = Runtime.getRuntime().exec(
-				cmd, null, new File(PDFVIEWER_EXECPATH));
-			input =
-				new BufferedReader(new InputStreamReader(p.getErrorStream()));
-		}
-		catch (Exception e) {
-			logger.error(
-				"There was an error trying to launch icepdf viewer ", e);
+			System.err.println(PDFVIEWER_EXECPATH + " " + cmmd);
+			Process p = Runtime.getRuntime().exec(cmmd, null, new File(PDFVIEWER_EXECPATH));
+			input = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+		} catch (Exception e) {
+			logger.error("There was an error trying to launch icepdf viewer ", e);
 			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			input.close();
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * com.consultec.esigns.core.queue.IMessageHandler#processMsg(java.lang.
+	 * 
+	 * @see com.consultec.esigns.core.queue.IMessageHandler#processMsg(java.lang.
 	 * String)
 	 */
 	@JmsListener(destination = "MQ_SERVER")
@@ -108,135 +105,126 @@ public class MessageHandler implements IMessageHandler {
 			case INIT:
 				// create local workspace
 				// write the received base64 package
-				String path = PropertiesManager.getInstance().getValue(
-					PropertiesManager.PROPERTY_USER_BASE_HOME);
-				String docName = PropertiesManager.getInstance().getValue(
-					PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
+				String path = PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+				String docName = PropertiesManager.getInstance()
+						.getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
 				String file = path + "/" + pobj.getSessionID() + "/" + docName;
 				IOUtility.writeDecodedContent(file, pobj.getPlainDocEncoded());
-
 				FileSystemManager.getInstance().init(pobj.getSessionID());
+				FileSystemManager.getInstance().serializeObjectFile(pobj);
+				EventLogger.getInstance().init();
+
 				ExecutorService executor = Executors.newSingleThreadExecutor();
 				executor.submit(() -> {
 					try {
 						commandSimplifiedLine(pobj.getSessionID());
-					}
-					catch (IOException e) {
-						logger.error(
-							"Unable to launch the PDF viewer due to: [" +
-								e.getMessage() + "]",
-							e);
+						EventLogger.getInstance().info("Se inicia el proceso de firma digital");
+					} catch (IOException e) {
+						logger.error("Unable to launch the PDF viewer due to: [" + e.getMessage() + "]", e);
 					}
 				});
 				break;
 			case MANUAL_SIGNED:
 				FileSystemManager manager = FileSystemManager.getInstance();
-				String urlTSA = PropertiesManager.getInstance().getValue(
-					PropertiesManager.TSA_URL_SERVER);
+				String urlTSA = PropertiesManager.getInstance().getValue(PropertiesManager.TSA_URL_SERVER);
 				char[] pwd = null;
 				String loggedUsr = InetUtility.getLoggedUserNameExt();
 				MessageFormat formatter = new MessageFormat(
-					PropertiesManager.getInstance().getValue(
-						PropertiesManager.PROPERTY_USER_STROKE_REASON));
-				String reason = formatter.format(
-					new Object[] {
-						loggedUsr
-					});
-				String keystoreAccessMode =
-					PropertiesManager.getInstance().getValue(
-						PropertiesManager.KEYSTORE_ACCESS_MODE);
+						PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_STROKE_REASON));
+				String reason = formatter.format(new Object[] { loggedUsr });
+				String keystoreAccessMode = PropertiesManager.getInstance()
+						.getValue(PropertiesManager.KEYSTORE_ACCESS_MODE);
 				Optional<String> nill = Optional.ofNullable(null);
-				KeyStoreAccessMode keystoreAccess =
-					KeyStoreAccessMode.fromString(keystoreAccessMode);
+				KeyStoreAccessMode keystoreAccess = KeyStoreAccessMode.fromString(keystoreAccessMode);
 				try {
 					manager.checkConsistency(pobj.getSessionID());
 					if (!InetUtility.isReachable(urlTSA)) {
-						logger.error(
-							"There was a timeout error because TSA Server is not reachable [" +
-								urlTSA + "]");
+						logger.error("There was a timeout error because TSA Server is not reachable [" + urlTSA + "]");
 					}
 					switch (keystoreAccess) {
+
 					case LOCAL_MACHINE:
-						JCAPISystemStoreRegistryLocation location =
-							new JCAPISystemStoreRegistryLocation(
+						JCAPISystemStoreRegistryLocation location = new JCAPISystemStoreRegistryLocation(
 								JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
-						JCAPIProperties.getInstance().setSystemStoreRegistryLocation(
-							location);
+						JCAPIProperties.getInstance().setSystemStoreRegistryLocation(location);
+
 					case WINDOWS_MY:
 					case WINDOWS_ROOT:
 						break;
 					default:
-						nill = Optional.of(
-							manager.getCertificate().getAbsolutePath());
-						pwd = PropertiesManager.getInstance().getValue(
-							PropertiesManager.PASSWORD_OPERATOR_CERTIFICATE).toCharArray();
+						nill = Optional.of(manager.getCertificate().getAbsolutePath());
+						pwd = PropertiesManager.getInstance().getValue(PropertiesManager.PASSWORD_OPERATOR_CERTIFICATE)
+								.toCharArray();
 					}
 
 					SecurityHelper helper = new SecurityHelper(keystoreAccess);
 					helper.init(nill, nill, pwd);
 					String alias = helper.getAlias();
-					logger.info(
-						" Obteniendo certificados requeridos para firmar ");
+					logger.info(" Obteniendo certificados requeridos para firmar bajo el alias [" + alias + "]");
 
-					Certificate[] signChain =
-						helper.getCertificateChainByAlias(alias);
-					PrivateKey signPrivateKey =
-						(PrivateKey) helper.getPrivateKeyByAlias(alias);
-					IExternalSignature pks = new PrivateKeySignature(
-						signPrivateKey, DigestAlgorithms.SHA256,
-						keystoreAccess.getProvider().getName());;
-					Certificate certificate =
-						helper.getCertificateByAlias(alias);
+					Certificate[] signChain = helper.getCertificateChainByAlias(alias);
+					PrivateKey signPrivateKey = (PrivateKey) helper.getPrivateKeyByAlias(alias);
+					IExternalSignature pks = new PrivateKeySignature(signPrivateKey, DigestAlgorithms.SHA256,
+							keystoreAccess.getProvider().getName());
+					Certificate certificate = helper.getCertificateByAlias(alias);
 
 					logger.info(" Realizando firma del documento ");
 
-					PDFSignatureUtil.signAddingPadesEpesProfile(
-						keystoreAccess.getDigestProvider(), certificate, pks,
-						signChain, manager.getPdfStrokedDoc().getAbsolutePath(),
-						manager.getPdfEsignedDoc().getAbsolutePath(), urlTSA,
-						Optional.of(reason),
-						Optional.of(
-							PropertiesManager.PROPERTY_USER_STROKE_LOCATION),
-						Optional.of(loggedUsr));
+					PDFSignatureUtil.signAddingPadesEpesProfile(keystoreAccess.getDigestProvider(), certificate, pks,
+							signChain, manager.getPdfStrokedDoc().getAbsolutePath(),
+							manager.getPdfEsignedDoc().getAbsolutePath(), urlTSA, Optional.of(reason),
+							Optional.of(PropertiesManager.getInstance()
+									.getValue(PropertiesManager.PROPERTY_USER_STROKE_LOCATION)),
+							Optional.of(loggedUsr));
 
-					if (PDFSignatureUtil.basicCheckSignedDoc(
-						manager.getPdfEsignedDoc().getAbsolutePath(),
-						"Signature1")) {
+					if (PDFSignatureUtil.basicCheckSignedDoc(manager.getPdfEsignedDoc().getAbsolutePath(),
+							"Signature1")) {
 						PayloadTO p = buildPayload();
 						objectMapper = new ObjectMapper();
 						String pckg = objectMapper.writeValueAsString(p);
 						logger.info(" Enviando paquete de vuelta a Stella ");
 
-						MQUtility.sendMessageMQ(
-							QueueConfig.class, MessageSender.class, pckg);
+						MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
 						Boolean doIt = Boolean.valueOf(
-							PropertiesManager.getInstance().getValue(
-								PropertiesManager.DELETE_DATA_ON_EXIT));
+								PropertiesManager.getInstance().getValue(PropertiesManager.DELETE_DATA_ON_EXIT));
 						FileSystemManager.getInstance().deleteOnExit(doIt);
+					} else {
+						throw new RuntimeException("Error trying to send PDF signed to Listener. Invalid signature");
 					}
-					else {
-						throw new RuntimeException(
-							"Error trying to send PDF signed to Listener. Invalid signature");
-					}
-				}
-				catch (Throwable e) {
-					logger.error(
-						"General error trying to sign the PdfDocument with sessionid : [" +
-							pobj.getSessionID() + "]  due to [" +
-							e.getMessage() + "]",
-						e);
+				} catch (Throwable e) {
+					String msgError = "General error trying to sign the PdfDocument with sessionid : [" + pobj.getSessionID()
+					+ "]  due to [" + e.getMessage() + "]";
+					logger.error(msgError, e);
+					EventLogger.getInstance().error(msgError);
 				}
 				break;
 			case E_SIGNED:
-				// TODO send pckg to Stella.
+				CloseableHttpClient httpclient = HttpClients.createDefault();
+				HttpPost httpPost = new HttpPost(pobj.getOrigin() + "/o/api/account-opening/receive-signature");
+				objectMapper = new ObjectMapper();
+				String pckg = objectMapper.writeValueAsString(pobj);
+				HttpEntity stringEntity = new StringEntity(pckg, ContentType.APPLICATION_JSON);
+				httpPost.setEntity(stringEntity);
+				httpPost.addHeader("Cookie", pobj.getCookieHeader());
+
+				@SuppressWarnings("unchecked")
+				LinkedHashMap<String, List<String>> header = (LinkedHashMap<String, List<String>>) pobj
+						.getSerializedObj();
+				header.keySet().stream().forEach(k -> httpPost.addHeader(k, header.get(k).get(0)));
+				httpPost.removeHeader(httpPost.getAllHeaders()[3]); // remueve el length
+
+				@SuppressWarnings("unused")
+				CloseableHttpResponse response2 = httpclient.execute(httpPost);
+				EventLogger.getInstance().info("Se envia el siguiente paquete " + pobj.getSessionID() + " al servidor '"
+						+ pobj.getOrigin() + "/account-opening/receive-signature'");
 				break;
 			default:
 				break;
 			}
-		}
-		catch (IOException e) {
-			logger.error(
-				"Error processing message : [" + e.getMessage() + "]", e);
+		} catch (IOException e) {
+			String msgError = "Error processing message : [" + e.getMessage() + "]"; 
+			logger.error(msgError, e);
+			EventLogger.getInstance().error(msgError);
 		}
 	}
 
@@ -247,32 +235,30 @@ public class MessageHandler implements IMessageHandler {
 	 */
 	private PayloadTO buildPayload() {
 
-		PayloadTO post = new PayloadTO();
+		PayloadTO post;
+		try {
+			post = (PayloadTO) FileSystemManager.getInstance().deserializeObject();
+		} catch (IOException e1) {
+			logger.error("Error building JSON Object: [" + e1.getMessage() + "]", e1);
+			post = new PayloadTO();
+		}
 		post.setSessionID(FileSystemManager.getInstance().getSessionId());
 		post.setStage(Stage.E_SIGNED);
 
 		byte[] strokedFile = null;
 		try {
-			strokedFile = FileUtils.readFileToByteArray(
-				FileSystemManager.getInstance().getPdfStrokedDoc());
+			strokedFile = FileUtils.readFileToByteArray(FileSystemManager.getInstance().getPdfStrokedDoc());
+		} catch (IOException e) {
+			logger.error("Error building JSON Object: [" + e.getMessage() + "]", e);
 		}
-		catch (IOException e) {
-			logger.error(
-				"Error building JSON Object: [" + e.getMessage() + "]");
-			e.printStackTrace();
-		}
-		post.setStrokedDocEncoded(
-			Base64.getEncoder().encodeToString(strokedFile));
+		post.setStrokedDocEncoded(Base64.getEncoder().encodeToString(strokedFile));
 
 		List<String> strokeList = new ArrayList<>();
 		for (File b : FileSystemManager.getInstance().getTextStrokeFiles()) {
 			try {
 				strokeList.add(new String(FileUtils.readFileToString(b)));
-			}
-			catch (IOException e) {
-				logger.error(
-					"Error building JSON Object: [" + e.getMessage() + "]");
-				e.printStackTrace();
+			} catch (IOException e) {
+				logger.error("Error building JSON Object: [" + e.getMessage() + "]", e);
 			}
 		}
 		post.setStrokes(strokeList.toArray(new String[0]));
@@ -281,28 +267,19 @@ public class MessageHandler implements IMessageHandler {
 		for (File b : FileSystemManager.getInstance().getImageStrokeFiles()) {
 			try {
 				imgList.add(new String(FileUtils.readFileToString(b)));
-			}
-			catch (IOException e) {
-				logger.error(
-					"Error building JSON Object: [" + e.getMessage() + "]");
-				e.printStackTrace();
+			} catch (IOException e) {
+				logger.error("Error building JSON Object: [" + e.getMessage() + "]", e);
 			}
 		}
 		post.setImages(imgList.toArray(new String[0]));
 
 		byte[] eSignedFile = null;
 		try {
-			eSignedFile = FileUtils.readFileToByteArray(
-				FileSystemManager.getInstance().getPdfEsignedDoc());
+			eSignedFile = FileUtils.readFileToByteArray(FileSystemManager.getInstance().getPdfEsignedDoc());
+		} catch (IOException e) {
+			logger.error("Error building JSON Object: [" + e.getMessage() + "]", e);
 		}
-		catch (IOException e) {
-			logger.error(
-				"Error building JSON Object: [" + e.getMessage() + "]");
-			e.printStackTrace();
-		}
-		post.setSignedDocEncoded(
-			Base64.getEncoder().encodeToString(eSignedFile));
+		post.setSignedDocEncoded(Base64.getEncoder().encodeToString(eSignedFile));
 		return post;
 	}
-
 }

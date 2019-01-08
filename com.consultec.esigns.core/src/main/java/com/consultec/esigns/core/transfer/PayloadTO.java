@@ -1,15 +1,19 @@
-/**
- * 
- */
 
-package com.consultec.esigns.core.model;
+package com.consultec.esigns.core.transfer;
+
+import java.io.Serializable;
 
 /**
  * The Class Post.
  *
  * @author hrodriguez
  */
-public class PayloadTO {
+public class PayloadTO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4053174635248731108L;
 
 	/**
 	 * The Enum Stage.
@@ -24,13 +28,6 @@ public class PayloadTO {
 			E_SIGNED,
 			/** The completed. */
 			COMPLETED
-	}
-
-	/**
-	 * Instantiates a new post.
-	 */
-	public PayloadTO() {
-
 	}
 
 	/** The stage. */
@@ -54,8 +51,14 @@ public class PayloadTO {
 	/** The session ID. */
 	private String sessionID;
 
+	private String origin;
+
 	/** The user logged. */
 	private String userLogged;
+
+	private Object serializedObj;
+
+	private String cookieHeader;
 
 	/**
 	 * Gets the stage.
@@ -223,6 +226,36 @@ public class PayloadTO {
 	public void setUserLogged(String userLogged) {
 
 		this.userLogged = userLogged;
+	}
+
+	public String getOrigin() {
+
+		return origin;
+	}
+
+	public void setOrigin(String origin) {
+
+		this.origin = origin;
+	}
+
+	public Object getSerializedObj() {
+
+		return serializedObj;
+	}
+
+	public void setSerializedObj(Object serializedObj) {
+
+		this.serializedObj = serializedObj;
+	}
+
+	public String getCookieHeader() {
+
+		return cookieHeader;
+	}
+
+	public void setCookieHeader(String cookieHeader) {
+
+		this.cookieHeader = cookieHeader;
 	}
 
 }
