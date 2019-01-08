@@ -29,11 +29,15 @@
 			<groupId>com.florentis</groupId>
 			<artifactId>flsx</artifactId>
 			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/flsx.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>com.florentis.licence</groupId>
 			<artifactId>wgssLicenceJNI</artifactId>
 			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/wgssLicenceJNI.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

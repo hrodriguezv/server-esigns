@@ -52,8 +52,8 @@ public class TestSign {
 
 		// Provider provider = new BouncyCastleProvider();
 		Optional<String> nill = Optional.ofNullable(null);
-		KeyStoreAccessMode mode = KeyStoreAccessMode.WINDOWS_MY;
-//		KeyStoreAccessMode mode = KeyStoreAccessMode.LOCAL_MACHINE;
+//		KeyStoreAccessMode mode = KeyStoreAccessMode.WINDOWS_MY;
+		KeyStoreAccessMode mode = KeyStoreAccessMode.LOCAL_MACHINE;
 		SecurityHelper helper = new SecurityHelper(mode);
 		// helper.init(
 		// "pkcs12", Optional.of(provider.getName()), Optional.of(KEYSTORE),

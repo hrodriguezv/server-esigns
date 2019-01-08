@@ -50,6 +50,7 @@ public class SecurityHelper {
 	private KeyStore keyStore;
 
 	/** The mode. */
+	@SuppressWarnings("unused")
 	private KeyStoreAccessMode mode;
 
 	/** The map keys. */
