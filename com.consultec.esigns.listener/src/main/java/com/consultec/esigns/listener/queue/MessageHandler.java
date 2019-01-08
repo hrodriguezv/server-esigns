@@ -56,29 +56,23 @@ import com.pheox.jcapi.JCAPISystemStoreRegistryLocation;
 public class MessageHandler implements IMessageHandler {
 
 	/** The Constant logger. */
-	private static final Logger logger =
-		LoggerFactory.getLogger(MessageHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
 
 	/** The Constant PDFVIEWER_EXECPATH. */
-	private static final String PDFVIEWER_EXECPATH =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_ICEPDF_PATH);
+	private static final String PDFVIEWER_EXECPATH = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_ICEPDF_PATH);
 
 	/** The Constant PDFVIEWER_EXECDEP. */
-	private static final String PDFVIEWER_EXECDEP =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_ICEPDF_DLLS);
+	private static final String PDFVIEWER_EXECDEP = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_ICEPDF_DLLS);
 
 	/**
 	 * Command simplified line.
 	 *
-	 * @param id
-	 *            the id
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
+	 * @param id the id
+	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	private void commandSimplifiedLine(String id)
-		throws IOException {
+	private void commandSimplifiedLine(String id) throws IOException {
 
 		String cmmd = ("java -Djava.library.path=\"" + PDFVIEWER_EXECDEP +
 			"\"" + " -jar icepdf-viewer-6.3.1-SNAPSHOT.jar -sessionid " + id);
@@ -94,16 +88,15 @@ public class MessageHandler implements IMessageHandler {
 			logger.error(
 				"There was an error trying to launch icepdf viewer ", e);
 			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			input.close();
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see
-	 * com.consultec.esigns.core.queue.IMessageHandler#processMsg(java.lang.
+	 * 
+	 * @see com.consultec.esigns.core.queue.IMessageHandler#processMsg(java.lang.
 	 * String)
 	 */
 	@JmsListener(destination = "MQ_SERVER")
@@ -116,10 +109,9 @@ public class MessageHandler implements IMessageHandler {
 			case INIT:
 				// create local workspace
 				// write the received base64 package
-				String path = PropertiesManager.getInstance().getValue(
-					PropertiesManager.PROPERTY_USER_BASE_HOME);
-				String docName = PropertiesManager.getInstance().getValue(
-					PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
+				String path = PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+				String docName = PropertiesManager.getInstance()
+						.getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
 				String file = path + "/" + pobj.getSessionID() + "/" + docName;
 				IOUtility.writeDecodedContent(file, pobj.getPlainDocEncoded());
 				FileSystemManager.getInstance().init(pobj.getSessionID());
@@ -146,35 +138,25 @@ public class MessageHandler implements IMessageHandler {
 				break;
 			case MANUAL_SIGNED:
 				FileSystemManager manager = FileSystemManager.getInstance();
-				String urlTSA = PropertiesManager.getInstance().getValue(
-					PropertiesManager.TSA_URL_SERVER);
+				String urlTSA = PropertiesManager.getInstance().getValue(PropertiesManager.TSA_URL_SERVER);
 				char[] pwd = null;
 				String loggedUsr = InetUtility.getLoggedUserNameExt();
 				MessageFormat formatter = new MessageFormat(
-					PropertiesManager.getInstance().getValue(
-						PropertiesManager.PROPERTY_USER_STROKE_REASON));
-				String reason = formatter.format(
-					new Object[] {
-						loggedUsr
-					});
-				String keystoreAccessMode =
-					PropertiesManager.getInstance().getValue(
-						PropertiesManager.KEYSTORE_ACCESS_MODE);
+						PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_STROKE_REASON));
+				String reason = formatter.format(new Object[] { loggedUsr });
+				String keystoreAccessMode = PropertiesManager.getInstance()
+						.getValue(PropertiesManager.KEYSTORE_ACCESS_MODE);
 				Optional<String> nill = Optional.ofNullable(null);
-				KeyStoreAccessMode keystoreAccess =
-					KeyStoreAccessMode.fromString(keystoreAccessMode);
+				KeyStoreAccessMode keystoreAccess = KeyStoreAccessMode.fromString(keystoreAccessMode);
 				try {
 					manager.checkConsistency(pobj.getSessionID());
 					if (!InetUtility.isReachable(urlTSA)) {
-						logger.error(
-							"There was a timeout error because TSA Server is not reachable [" +
-								urlTSA + "]");
+						logger.error("There was a timeout error because TSA Server is not reachable [" + urlTSA + "]");
 					}
 					switch (keystoreAccess) {
 
 					case LOCAL_MACHINE:
-						JCAPISystemStoreRegistryLocation location =
-							new JCAPISystemStoreRegistryLocation(
+						JCAPISystemStoreRegistryLocation location = new JCAPISystemStoreRegistryLocation(
 								JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
 						JCAPIProperties.getInstance().setSystemStoreRegistryLocation(
 							location);
@@ -183,10 +165,9 @@ public class MessageHandler implements IMessageHandler {
 					case WINDOWS_ROOT:
 						break;
 					default:
-						nill = Optional.of(
-							manager.getCertificate().getAbsolutePath());
-						pwd = PropertiesManager.getInstance().getValue(
-							PropertiesManager.PASSWORD_OPERATOR_CERTIFICATE).toCharArray();
+						nill = Optional.of(manager.getCertificate().getAbsolutePath());
+						pwd = PropertiesManager.getInstance().getValue(PropertiesManager.PASSWORD_OPERATOR_CERTIFICATE)
+								.toCharArray();
 					}
 
 					SecurityHelper helper = new SecurityHelper(keystoreAccess);
@@ -228,12 +209,12 @@ public class MessageHandler implements IMessageHandler {
 						String pckg = objectMapper.writeValueAsString(p);
 						logger.info(" Enviando paquete de vuelta a Stella ");
 
-						MQUtility.sendMessageMQ(
-							QueueConfig.class, MessageSender.class, pckg);
+						MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
 						Boolean doIt = Boolean.valueOf(
-							PropertiesManager.getInstance().getValue(
-								PropertiesManager.DELETE_DATA_ON_EXIT));
+								PropertiesManager.getInstance().getValue(PropertiesManager.DELETE_DATA_ON_EXIT));
 						FileSystemManager.getInstance().deleteOnExit(doIt);
+					} else {
+						throw new RuntimeException("Error trying to send PDF signed to Listener. Invalid signature");
 					}
 					else {
 						throw new RuntimeException(
@@ -318,8 +299,7 @@ public class MessageHandler implements IMessageHandler {
 		catch (IOException e) {
 			logger.error(formatter.format(e.getMessage()), e);
 		}
-		post.setStrokedDocEncoded(
-			Base64.getEncoder().encodeToString(strokedFile));
+		post.setStrokedDocEncoded(Base64.getEncoder().encodeToString(strokedFile));
 
 		List<String> strokeList = new ArrayList<>();
 		for (File b : FileSystemManager.getInstance().getTextStrokeFiles()) {
@@ -345,8 +325,9 @@ public class MessageHandler implements IMessageHandler {
 
 		byte[] eSignedFile = null;
 		try {
-			eSignedFile = FileUtils.readFileToByteArray(
-				FileSystemManager.getInstance().getPdfEsignedDoc());
+			eSignedFile = FileUtils.readFileToByteArray(FileSystemManager.getInstance().getPdfEsignedDoc());
+		} catch (IOException e) {
+			logger.error("Error building JSON Object: [" + e.getMessage() + "]", e);
 		}
 		catch (IOException e) {
 			logger.error(formatter.format(e.getMessage()), e);

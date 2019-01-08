@@ -23,13 +23,12 @@ import com.consultec.esigns.core.util.PropertiesManager;
 public class FileSystemManager {
 
 	/** The Constant IMAGE_SRC_EXT. */
-	final static String IMAGE_SRC_EXT =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
+	final static String IMAGE_SRC_EXT = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
 
 	/** The Constant TEXT_SRC_EXT. */
-	final static String TEXT_SRC_EXT = PropertiesManager.getInstance().getValue(
-		PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
+	final static String TEXT_SRC_EXT = PropertiesManager.getInstance()
+			.getValue(PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
 
 	/** The user home. */
 	private File userHome;
@@ -121,8 +120,7 @@ public class FileSystemManager {
 		throws FileNotFoundException {
 
 		PropertiesManager pref = PropertiesManager.getInstance();
-		String pathHome =
-			pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+		String pathHome = pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
 		File homeDir = new File(pathHome);
 		instance.sessionId = id;
 		instance.userHome = new File(homeDir, id);
@@ -143,13 +141,11 @@ public class FileSystemManager {
 				"Base PDF Document to sign doesn't exist!");
 		}
 
-		instance.pdfStrokedDoc = new File(
-			instance.userHome,
-			pref.getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT));
+		instance.pdfStrokedDoc = new File(instance.userHome,
+				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT));
 
-		instance.pdfEsignedDoc = new File(
-			instance.userHome, pref.getValue(
-				PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
+		instance.pdfEsignedDoc = new File(instance.userHome,
+				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
 
 		instance.imgStrokeFiles = new ArrayList<File>();
 		instance.textStrokeFiles = new ArrayList<File>();
@@ -159,17 +155,13 @@ public class FileSystemManager {
 	/**
 	 * Check consistency.
 	 *
-	 * @param sessionId
-	 *            the session id
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
+	 * @param sessionId the session id
+	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public void checkConsistency(String sessionId)
-		throws IOException {
+	public void checkConsistency(String sessionId) throws IOException {
 
 		if (!instance.sessionId.equals(sessionId))
-			throw new IllegalStateException(
-				"Inconsistency in FileSystem != sessionId");
+			throw new IllegalStateException("Inconsistency in FileSystem != sessionId");
 
 		if (!instance.userHome.exists()) {
 			throw new FileNotFoundException("User home folder doesn't exist!");
@@ -184,8 +176,7 @@ public class FileSystemManager {
 				PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
 
 		if (!instance.pdfDocument.exists()) {
-			throw new FileNotFoundException(
-				"PDF Document to sign doesn't exist!");
+			throw new FileNotFoundException("PDF Document to sign doesn't exist!");
 		}
 
 		if (!instance.pdfStrokedDoc.exists()) {
@@ -276,8 +267,7 @@ public class FileSystemManager {
 	/**
 	 * Adds the img signature file.
 	 *
-	 * @param e
-	 *            the e
+	 * @param e the e
 	 */
 	public void addImgStrokeFile(File e) {
 
@@ -287,8 +277,7 @@ public class FileSystemManager {
 	/**
 	 * Adds the text signature file.
 	 *
-	 * @param e
-	 *            the e
+	 * @param e the e
 	 */
 	public void addTextStrokeFile(File e) {
 
@@ -318,8 +307,7 @@ public class FileSystemManager {
 	/**
 	 * Sets the pdf stroked doc.
 	 *
-	 * @param pdfStrokedDoc
-	 *            the new pdf stroked doc
+	 * @param pdfStrokedDoc the new pdf stroked doc
 	 */
 	public void setPdfStrokedDoc(File pdfStrokedDoc) {
 
