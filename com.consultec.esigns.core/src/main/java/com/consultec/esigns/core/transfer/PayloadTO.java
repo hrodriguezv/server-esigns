@@ -10,9 +10,7 @@ import java.io.Serializable;
  */
 public class PayloadTO implements Serializable {
 
-	/**
-	 * 
-	 */
+	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = -4053174635248731108L;
 
 	/**
@@ -51,13 +49,16 @@ public class PayloadTO implements Serializable {
 	/** The session ID. */
 	private String sessionID;
 
+	/** The origin. */
 	private String origin;
 
 	/** The user logged. */
 	private String userLogged;
 
+	/** The serialized obj. */
 	private Object serializedObj;
 
+	/** The cookie header. */
 	private String cookieHeader;
 
 	/**
@@ -228,31 +229,61 @@ public class PayloadTO implements Serializable {
 		this.userLogged = userLogged;
 	}
 
+	/**
+	 * Gets the origin.
+	 *
+	 * @return the origin
+	 */
 	public String getOrigin() {
 
 		return origin;
 	}
 
+	/**
+	 * Sets the origin.
+	 *
+	 * @param origin the new origin
+	 */
 	public void setOrigin(String origin) {
 
 		this.origin = origin;
 	}
 
+	/**
+	 * Gets the serialized obj.
+	 *
+	 * @return the serialized obj
+	 */
 	public Object getSerializedObj() {
 
 		return serializedObj;
 	}
 
+	/**
+	 * Sets the serialized obj.
+	 *
+	 * @param serializedObj the new serialized obj
+	 */
 	public void setSerializedObj(Object serializedObj) {
 
 		this.serializedObj = serializedObj;
 	}
 
+	/**
+	 * Gets the cookie header.
+	 *
+	 * @return the cookie header
+	 */
 	public String getCookieHeader() {
 
 		return cookieHeader;
 	}
 
+	/**
+	 * Sets the cookie header.
+	 *
+	 * @param cookieHeader the new cookie header
+	 */
 	public void setCookieHeader(String cookieHeader) {
 
 		this.cookieHeader = cookieHeader;
