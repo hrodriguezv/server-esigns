@@ -2,10 +2,8 @@
 .gradle
 .project
 .settings
-logs
 target
 */target
-*/logs
 */build
 activemq-data
 */activemq-data
@@ -22,4 +20,3 @@ gradle
 **/.sass-cache
 **/.settings
 **/bin
-**/logs

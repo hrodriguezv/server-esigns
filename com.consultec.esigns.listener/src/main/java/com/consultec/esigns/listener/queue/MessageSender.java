@@ -47,7 +47,7 @@ public class MessageSender implements IMessageSender {
 	 * com.consultec.esigns.core.queue.IMessageSender#sendMessage(java.lang.String)
 	 */
 	public void sendMessage(final String message) {
-		logger.debug("sending: " + message);
+		logger.info("sending: " + message);
 		jmsTemplate.send(
 				PropertiesManager.getInstance().getValue(PropertiesManager.QUEUE_SERVER_NAME),
 				new MessageCreator() {

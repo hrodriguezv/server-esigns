@@ -10,36 +10,27 @@ import java.security.cert.Certificate;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
-import com.consultec.esigns.core.events.EventLogger;
 import com.consultec.esigns.core.io.FileSystemManager;
 import com.consultec.esigns.core.io.IOUtility;
+import com.consultec.esigns.core.model.PayloadTO;
+import com.consultec.esigns.core.model.PayloadTO.Stage;
 import com.consultec.esigns.core.queue.IMessageHandler;
 import com.consultec.esigns.core.security.KeyStoreAccessMode;
 import com.consultec.esigns.core.security.SecurityHelper;
-import com.consultec.esigns.core.transfer.PayloadTO;
-import com.consultec.esigns.core.transfer.PayloadTO.Stage;
 import com.consultec.esigns.core.util.InetUtility;
 import com.consultec.esigns.core.util.MQUtility;
-import com.consultec.esigns.core.util.PDFSigner;
+import com.consultec.esigns.core.util.PDFSignatureUtil;
 import com.consultec.esigns.core.util.PropertiesManager;
 import com.consultec.esigns.listener.config.QueueConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,13 +71,14 @@ public class MessageHandler implements IMessageHandler {
 	private void commandSimplifiedLine(String id)
 		throws IOException {
 
-		String cmmd = ("java -Djava.library.path=\"" + PDFVIEWER_EXECDEP +
-			"\"" + " -jar icepdf-viewer-6.3.1-SNAPSHOT.jar -sessionid " + id);
+		String[] cmd = {
+			"java", "-Djava.library.path=\"" + PDFVIEWER_EXECDEP + "\";",
+			"-jar", "icepdf-viewer-6.3.1-SNAPSHOT.jar", "-sessionid", id
+		};
 		BufferedReader input = null;
 		try {
-			System.err.println(PDFVIEWER_EXECPATH + " " + cmmd);
 			Process p = Runtime.getRuntime().exec(
-				cmmd, null, new File(PDFVIEWER_EXECPATH));
+				cmd, null, new File(PDFVIEWER_EXECPATH));
 			input =
 				new BufferedReader(new InputStreamReader(p.getErrorStream()));
 		}
@@ -122,25 +114,18 @@ public class MessageHandler implements IMessageHandler {
 					PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
 				String file = path + "/" + pobj.getSessionID() + "/" + docName;
 				IOUtility.writeDecodedContent(file, pobj.getPlainDocEncoded());
-				FileSystemManager.getInstance().init(pobj.getSessionID());
-				FileSystemManager.getInstance().serializeObjectFile(pobj);
 
+				FileSystemManager.getInstance().init(pobj.getSessionID());
 				ExecutorService executor = Executors.newSingleThreadExecutor();
 				executor.submit(() -> {
 					try {
 						commandSimplifiedLine(pobj.getSessionID());
-						EventLogger.getInstance().info(
-							"Se inicia el proceso de firma digital. Session ID: [" +
-								pobj.getSessionID() + "]");
 					}
 					catch (IOException e) {
 						logger.error(
-							"There was an error trying start the launcher of PDF viewer : [" +
+							"Unable to launch the PDF viewer due to: [" +
 								e.getMessage() + "]",
 							e);
-						EventLogger.getInstance().error(
-							"Hubo un error ejecutando el launcher del visualizador de PDF's : [" +
-								e.getMessage() + "]");
 					}
 				});
 				break;
@@ -171,14 +156,12 @@ public class MessageHandler implements IMessageHandler {
 								urlTSA + "]");
 					}
 					switch (keystoreAccess) {
-
 					case LOCAL_MACHINE:
 						JCAPISystemStoreRegistryLocation location =
 							new JCAPISystemStoreRegistryLocation(
 								JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
 						JCAPIProperties.getInstance().setSystemStoreRegistryLocation(
 							location);
-
 					case WINDOWS_MY:
 					case WINDOWS_ROOT:
 						break;
@@ -193,8 +176,7 @@ public class MessageHandler implements IMessageHandler {
 					helper.init(nill, nill, pwd);
 					String alias = helper.getAlias();
 					logger.info(
-						" Getting certificates from Keystore under alias : [" +
-							alias + "]");
+						" Obteniendo certificados requeridos para firmar ");
 
 					Certificate[] signChain =
 						helper.getCertificateChainByAlias(alias);
@@ -202,27 +184,24 @@ public class MessageHandler implements IMessageHandler {
 						(PrivateKey) helper.getPrivateKeyByAlias(alias);
 					IExternalSignature pks = new PrivateKeySignature(
 						signPrivateKey, DigestAlgorithms.SHA256,
-						keystoreAccess.getProvider().getName());
+						keystoreAccess.getProvider().getName());;
 					Certificate certificate =
 						helper.getCertificateByAlias(alias);
 
-					logger.info("Signature process is started");
+					logger.info(" Realizando firma del documento ");
 
-					PDFSigner signer = new PDFSigner.Builder(
-						keystoreAccess.getDigestProvider(), pks, certificate,
+					PDFSignatureUtil.signAddingPadesEpesProfile(
+						keystoreAccess.getDigestProvider(), certificate, pks,
 						signChain, manager.getPdfStrokedDoc().getAbsolutePath(),
-						manager.getPdfEsignedDoc().getAbsolutePath(),
-						urlTSA).reason(Optional.of(reason)).location(
-							Optional.of(
-								PropertiesManager.getInstance().getValue(
-									PropertiesManager.PROPERTY_USER_STROKE_LOCATION))).userName(
-										Optional.of(loggedUsr)).build();
-					signer.sign();
-					EventLogger.getInstance().info(
-						"Se ha realizado la firma electronica del documento asociado a la session : [" +
-							pobj.getSessionID() + "]");
+						manager.getPdfEsignedDoc().getAbsolutePath(), urlTSA,
+						Optional.of(reason),
+						Optional.of(
+							PropertiesManager.PROPERTY_USER_STROKE_LOCATION),
+						Optional.of(loggedUsr));
 
-					if (signer.basicCheckSignedDoc()) {
+					if (PDFSignatureUtil.basicCheckSignedDoc(
+						manager.getPdfEsignedDoc().getAbsolutePath(),
+						"Signature1")) {
 						PayloadTO p = buildPayload();
 						objectMapper = new ObjectMapper();
 						String pckg = objectMapper.writeValueAsString(p);
@@ -241,50 +220,23 @@ public class MessageHandler implements IMessageHandler {
 					}
 				}
 				catch (Throwable e) {
-					String msgError =
+					logger.error(
 						"General error trying to sign the PdfDocument with sessionid : [" +
 							pobj.getSessionID() + "]  due to [" +
-							e.getMessage() + "]";
-					logger.error(msgError, e);
-					EventLogger.getInstance().error(msgError);
+							e.getMessage() + "]",
+						e);
 				}
 				break;
 			case E_SIGNED:
-				CloseableHttpClient httpclient = HttpClients.createDefault();
-				HttpPost httpPost = new HttpPost(
-					pobj.getOrigin() +
-						"/o/api/account-opening/receive-signature");
-				objectMapper = new ObjectMapper();
-				String pckg = objectMapper.writeValueAsString(pobj);
-				HttpEntity stringEntity =
-					new StringEntity(pckg, ContentType.APPLICATION_JSON);
-				httpPost.setEntity(stringEntity);
-				httpPost.addHeader("Cookie", pobj.getCookieHeader());
-
-				@SuppressWarnings("unchecked")
-				LinkedHashMap<String, List<String>> header =
-					(LinkedHashMap<String, List<String>>) pobj.getSerializedObj();
-				header.keySet().stream().forEach(
-					k -> httpPost.addHeader(k, header.get(k).get(0)));
-				httpPost.removeHeader(httpPost.getAllHeaders()[3]); // remueve
-																	// el length
-
-				@SuppressWarnings("unused")
-				CloseableHttpResponse response2 = httpclient.execute(httpPost);
-				EventLogger.getInstance().info(
-					"Se envia el documento relacionado a la session : [" +
-						pobj.getSessionID() + "] al servidor [" +
-						pobj.getOrigin() + "]");
+				// TODO send pckg to Stella.
 				break;
 			default:
 				break;
 			}
 		}
 		catch (IOException e) {
-			String msgError =
-				"Error processing message : [" + e.getMessage() + "]";
-			logger.error(msgError, e);
-			EventLogger.getInstance().error(msgError);
+			logger.error(
+				"Error processing message : [" + e.getMessage() + "]", e);
 		}
 	}
 
@@ -295,18 +247,7 @@ public class MessageHandler implements IMessageHandler {
 	 */
 	private PayloadTO buildPayload() {
 
-		String errorMsg = "Error building JSON Object: [{0}]";
-		MessageFormat formatter = new MessageFormat(errorMsg);
-
-		PayloadTO post;
-		try {
-			post =
-				(PayloadTO) FileSystemManager.getInstance().deserializeObject();
-		}
-		catch (IOException e1) {
-			logger.error(formatter.format(e1.getMessage()), e1);
-			post = new PayloadTO();
-		}
+		PayloadTO post = new PayloadTO();
 		post.setSessionID(FileSystemManager.getInstance().getSessionId());
 		post.setStage(Stage.E_SIGNED);
 
@@ -316,7 +257,9 @@ public class MessageHandler implements IMessageHandler {
 				FileSystemManager.getInstance().getPdfStrokedDoc());
 		}
 		catch (IOException e) {
-			logger.error(formatter.format(e.getMessage()), e);
+			logger.error(
+				"Error building JSON Object: [" + e.getMessage() + "]");
+			e.printStackTrace();
 		}
 		post.setStrokedDocEncoded(
 			Base64.getEncoder().encodeToString(strokedFile));
@@ -327,7 +270,9 @@ public class MessageHandler implements IMessageHandler {
 				strokeList.add(new String(FileUtils.readFileToString(b)));
 			}
 			catch (IOException e) {
-				logger.error(formatter.format(e.getMessage()), e);
+				logger.error(
+					"Error building JSON Object: [" + e.getMessage() + "]");
+				e.printStackTrace();
 			}
 		}
 		post.setStrokes(strokeList.toArray(new String[0]));
@@ -338,7 +283,9 @@ public class MessageHandler implements IMessageHandler {
 				imgList.add(new String(FileUtils.readFileToString(b)));
 			}
 			catch (IOException e) {
-				logger.error(formatter.format(e.getMessage()), e);
+				logger.error(
+					"Error building JSON Object: [" + e.getMessage() + "]");
+				e.printStackTrace();
 			}
 		}
 		post.setImages(imgList.toArray(new String[0]));
@@ -349,10 +296,13 @@ public class MessageHandler implements IMessageHandler {
 				FileSystemManager.getInstance().getPdfEsignedDoc());
 		}
 		catch (IOException e) {
-			logger.error(formatter.format(e.getMessage()), e);
+			logger.error(
+				"Error building JSON Object: [" + e.getMessage() + "]");
+			e.printStackTrace();
 		}
 		post.setSignedDocEncoded(
 			Base64.getEncoder().encodeToString(eSignedFile));
 		return post;
 	}
+
 }
