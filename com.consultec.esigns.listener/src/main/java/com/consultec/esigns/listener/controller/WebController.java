@@ -22,13 +22,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * The Class WebController.
  */
-
 @RestController
 @RequestMapping("/files") // RequestMapping for Class
 public class WebController {
 
+	/** The Constant logger. */
 	private static final Logger logger = LoggerFactory.getLogger(WebController.class);
 
+	/**
+	 * Gets the value from header key.
+	 *
+	 * @param headers the headers
+	 * @param key the key
+	 * @return the value from header key
+	 */
 	private String getValueFromHeaderKey(HttpHeaders headers, String key) {
 		Set<Entry<String, List<String>>> set = headers.entrySet();
 		String value = set.stream().filter(entry -> entry.getKey().equals(key)).findFirst().get().getValue().stream()
@@ -38,10 +45,8 @@ public class WebController {
 	
 	/**
 	 * Do work.
-	 * 
-	 * @param string
 	 *
-	 * @param base   the base
+	 * @param pobj the pobj
 	 */
 	private static void doWork(PayloadTO pobj) {
 		try {
@@ -55,6 +60,12 @@ public class WebController {
 		}
 	}
 
+	/**
+	 * Receive.
+	 *
+	 * @param p1 the p 1
+	 * @param headers the headers
+	 */
 	@RequestMapping(value = "/receive", method = { RequestMethod.GET, RequestMethod.POST }, consumes = {
 			"application/json" })
 	public void receive(@RequestBody PayloadTO p1, @RequestHeader HttpHeaders headers) {
