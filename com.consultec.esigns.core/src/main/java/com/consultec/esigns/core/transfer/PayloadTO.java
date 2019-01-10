@@ -61,6 +61,9 @@ public class PayloadTO implements Serializable {
 	/** The cookie header. */
 	private String cookieHeader;
 
+	/** The code. */
+	private String code;
+	
 	/**
 	 * Gets the stage.
 	 *
@@ -287,6 +290,27 @@ public class PayloadTO implements Serializable {
 	public void setCookieHeader(String cookieHeader) {
 
 		this.cookieHeader = cookieHeader;
+	}
+
+	/**
+	 * Gets the code.
+	 *
+	 * @return the code
+	 */
+	public String getCode() {
+	
+		return code;
+	}
+
+	
+	/**
+	 * Sets the code.
+	 *
+	 * @param code the new code
+	 */
+	public void setCode(String code) {
+	
+		this.code = code;
 	}
 
 }

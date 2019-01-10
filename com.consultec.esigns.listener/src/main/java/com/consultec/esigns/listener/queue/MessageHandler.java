@@ -1,22 +1,15 @@
 
 package com.consultec.esigns.listener.queue;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -31,17 +24,17 @@ import org.springframework.stereotype.Component;
 
 import com.consultec.esigns.core.events.EventLogger;
 import com.consultec.esigns.core.io.FileSystemManager;
-import com.consultec.esigns.core.io.IOUtility;
 import com.consultec.esigns.core.queue.IMessageHandler;
 import com.consultec.esigns.core.security.KeyStoreAccessMode;
 import com.consultec.esigns.core.security.SecurityHelper;
 import com.consultec.esigns.core.transfer.PayloadTO;
-import com.consultec.esigns.core.transfer.PayloadTO.Stage;
 import com.consultec.esigns.core.util.InetUtility;
 import com.consultec.esigns.core.util.MQUtility;
 import com.consultec.esigns.core.util.PDFSigner;
 import com.consultec.esigns.core.util.PropertiesManager;
 import com.consultec.esigns.listener.config.QueueConfig;
+import com.consultec.esigns.listener.util.ListenerConstantProperties;
+import com.consultec.esigns.listener.util.TransferObjectsUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.signatures.DigestAlgorithms;
 import com.itextpdf.signatures.IExternalSignature;
@@ -59,47 +52,6 @@ public class MessageHandler implements IMessageHandler {
 	private static final Logger logger =
 		LoggerFactory.getLogger(MessageHandler.class);
 
-	/** The Constant PDFVIEWER_EXECPATH. */
-	private static final String PDFVIEWER_EXECPATH =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_ICEPDF_PATH);
-
-	/** The Constant PDFVIEWER_EXECDEP. */
-	private static final String PDFVIEWER_EXECDEP =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.PROPERTY_ICEPDF_DLLS);
-
-	/**
-	 * Command simplified line.
-	 *
-	 * @param id
-	 *            the id
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
-	 */
-	private void commandSimplifiedLine(String id)
-		throws IOException {
-
-		String cmmd = ("java -Djava.library.path=\"" + PDFVIEWER_EXECDEP +
-			"\"" + " -jar icepdf-viewer-6.3.1-SNAPSHOT.jar -sessionid " + id);
-		BufferedReader input = null;
-		try {
-			System.err.println(PDFVIEWER_EXECPATH + " " + cmmd);
-			Process p = Runtime.getRuntime().exec(
-				cmmd, null, new File(PDFVIEWER_EXECPATH));
-			input =
-				new BufferedReader(new InputStreamReader(p.getErrorStream()));
-		}
-		catch (Exception e) {
-			logger.error(
-				"There was an error trying to launch icepdf viewer ", e);
-			e.printStackTrace();
-		}
-		finally {
-			input.close();
-		}
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see
@@ -109,26 +61,23 @@ public class MessageHandler implements IMessageHandler {
 	@JmsListener(destination = "MQ_SERVER")
 	public void processMsg(String msg) {
 
+		FileSystemManager manager = FileSystemManager.getInstance();
+		ObjectMapper objectMapper = new ObjectMapper();
+
 		try {
-			ObjectMapper objectMapper = new ObjectMapper();
 			final PayloadTO pobj = objectMapper.readValue(msg, PayloadTO.class);
 			switch (pobj.getStage()) {
 			case INIT:
-				// create local workspace
-				// write the received base64 package
-				String path = PropertiesManager.getInstance().getValue(
-					PropertiesManager.PROPERTY_USER_BASE_HOME);
-				String docName = PropertiesManager.getInstance().getValue(
-					PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
-				String file = path + "/" + pobj.getSessionID() + "/" + docName;
-				IOUtility.writeDecodedContent(file, pobj.getPlainDocEncoded());
-				FileSystemManager.getInstance().init(pobj.getSessionID());
-				FileSystemManager.getInstance().serializeObjectFile(pobj);
+				manager.init(pobj.getSessionID());
+				manager.createLocalWorkspace(
+					pobj.getSessionID(), pobj.getPlainDocEncoded());
+				manager.serializeObjectFile(pobj);
 
 				ExecutorService executor = Executors.newSingleThreadExecutor();
 				executor.submit(() -> {
 					try {
-						commandSimplifiedLine(pobj.getSessionID());
+						ListenerConstantProperties.launchClientApp(
+							pobj.getSessionID());
 						EventLogger.getInstance().info(
 							"Se inicia el proceso de firma digital. Session ID: [" +
 								pobj.getSessionID() + "]");
@@ -145,33 +94,20 @@ public class MessageHandler implements IMessageHandler {
 				});
 				break;
 			case MANUAL_SIGNED:
-				FileSystemManager manager = FileSystemManager.getInstance();
-				String urlTSA = PropertiesManager.getInstance().getValue(
-					PropertiesManager.TSA_URL_SERVER);
 				char[] pwd = null;
-				String loggedUsr = InetUtility.getLoggedUserNameExt();
-				MessageFormat formatter = new MessageFormat(
-					PropertiesManager.getInstance().getValue(
-						PropertiesManager.PROPERTY_USER_STROKE_REASON));
-				String reason = formatter.format(
-					new Object[] {
-						loggedUsr
-					});
-				String keystoreAccessMode =
-					PropertiesManager.getInstance().getValue(
-						PropertiesManager.KEYSTORE_ACCESS_MODE);
 				Optional<String> nill = Optional.ofNullable(null);
 				KeyStoreAccessMode keystoreAccess =
-					KeyStoreAccessMode.fromString(keystoreAccessMode);
+					KeyStoreAccessMode.fromString(
+						ListenerConstantProperties.KEYSTORE_ACCESS_MODE);
 				try {
 					manager.checkConsistency(pobj.getSessionID());
-					if (!InetUtility.isReachable(urlTSA)) {
+					if (!InetUtility.isReachable(
+						ListenerConstantProperties.URL_TSA)) {
 						logger.error(
 							"There was a timeout error because TSA Server is not reachable [" +
-								urlTSA + "]");
+								ListenerConstantProperties.URL_TSA + "]");
 					}
 					switch (keystoreAccess) {
-
 					case LOCAL_MACHINE:
 						JCAPISystemStoreRegistryLocation location =
 							new JCAPISystemStoreRegistryLocation(
@@ -212,18 +148,21 @@ public class MessageHandler implements IMessageHandler {
 						keystoreAccess.getDigestProvider(), pks, certificate,
 						signChain, manager.getPdfStrokedDoc().getAbsolutePath(),
 						manager.getPdfEsignedDoc().getAbsolutePath(),
-						urlTSA).reason(Optional.of(reason)).location(
+						ListenerConstantProperties.URL_TSA).reason(
 							Optional.of(
-								PropertiesManager.getInstance().getValue(
-									PropertiesManager.PROPERTY_USER_STROKE_LOCATION))).userName(
-										Optional.of(loggedUsr)).build();
+								ListenerConstantProperties.SIGNATURE_REASON_TEXT)).location(
+									Optional.of(
+										PropertiesManager.getInstance().getValue(
+											PropertiesManager.PROPERTY_USER_STROKE_LOCATION))).userName(
+												Optional.of(
+													ListenerConstantProperties.LOGGED_USER)).build();
 					signer.sign();
 					EventLogger.getInstance().info(
 						"Se ha realizado la firma electronica del documento asociado a la session : [" +
 							pobj.getSessionID() + "]");
 
 					if (signer.basicCheckSignedDoc()) {
-						PayloadTO p = buildPayload();
+						PayloadTO p = TransferObjectsUtil.buildPayloadFromDrive();
 						objectMapper = new ObjectMapper();
 						String pckg = objectMapper.writeValueAsString(p);
 						logger.info(" Enviando paquete de vuelta a Stella ");
@@ -233,7 +172,7 @@ public class MessageHandler implements IMessageHandler {
 						Boolean doIt = Boolean.valueOf(
 							PropertiesManager.getInstance().getValue(
 								PropertiesManager.DELETE_DATA_ON_EXIT));
-						FileSystemManager.getInstance().deleteOnExit(doIt);
+						manager.deleteOnExit(doIt);
 					}
 					else {
 						throw new RuntimeException(
@@ -286,73 +225,5 @@ public class MessageHandler implements IMessageHandler {
 			logger.error(msgError, e);
 			EventLogger.getInstance().error(msgError);
 		}
-	}
-
-	/**
-	 * Builds the payload.
-	 *
-	 * @return the payload TO
-	 */
-	private PayloadTO buildPayload() {
-
-		String errorMsg = "Error building JSON Object: [{0}]";
-		MessageFormat formatter = new MessageFormat(errorMsg);
-
-		PayloadTO post;
-		try {
-			post =
-				(PayloadTO) FileSystemManager.getInstance().deserializeObject();
-		}
-		catch (IOException e1) {
-			logger.error(formatter.format(e1.getMessage()), e1);
-			post = new PayloadTO();
-		}
-		post.setSessionID(FileSystemManager.getInstance().getSessionId());
-		post.setStage(Stage.E_SIGNED);
-
-		byte[] strokedFile = null;
-		try {
-			strokedFile = FileUtils.readFileToByteArray(
-				FileSystemManager.getInstance().getPdfStrokedDoc());
-		}
-		catch (IOException e) {
-			logger.error(formatter.format(e.getMessage()), e);
-		}
-		post.setStrokedDocEncoded(
-			Base64.getEncoder().encodeToString(strokedFile));
-
-		List<String> strokeList = new ArrayList<>();
-		for (File b : FileSystemManager.getInstance().getTextStrokeFiles()) {
-			try {
-				strokeList.add(new String(FileUtils.readFileToString(b)));
-			}
-			catch (IOException e) {
-				logger.error(formatter.format(e.getMessage()), e);
-			}
-		}
-		post.setStrokes(strokeList.toArray(new String[0]));
-
-		List<String> imgList = new ArrayList<>();
-		for (File b : FileSystemManager.getInstance().getImageStrokeFiles()) {
-			try {
-				imgList.add(new String(FileUtils.readFileToString(b)));
-			}
-			catch (IOException e) {
-				logger.error(formatter.format(e.getMessage()), e);
-			}
-		}
-		post.setImages(imgList.toArray(new String[0]));
-
-		byte[] eSignedFile = null;
-		try {
-			eSignedFile = FileUtils.readFileToByteArray(
-				FileSystemManager.getInstance().getPdfEsignedDoc());
-		}
-		catch (IOException e) {
-			logger.error(formatter.format(e.getMessage()), e);
-		}
-		post.setSignedDocEncoded(
-			Base64.getEncoder().encodeToString(eSignedFile));
-		return post;
 	}
 }

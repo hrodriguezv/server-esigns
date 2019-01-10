@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,12 +24,13 @@ import com.consultec.esigns.core.util.PropertiesManager;
 public class FileSystemManager {
 
 	/** The Constant IMAGE_SRC_EXT. */
-	final static String IMAGE_SRC_EXT = PropertiesManager.getInstance()
-			.getValue(PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
+	private final static String IMAGE_SRC_EXT =
+		PropertiesManager.getInstance().getValue(
+			PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
 
 	/** The Constant TEXT_SRC_EXT. */
-	final static String TEXT_SRC_EXT = PropertiesManager.getInstance()
-			.getValue(PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
+	private final static String TEXT_SRC_EXT = PropertiesManager.getInstance().getValue(
+		PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
 
 	/** The user home. */
 	private File userHome;
@@ -63,6 +65,7 @@ public class FileSystemManager {
 	/** The session id. */
 	private String sessionId;
 
+	/** The serialized object ref. */
 	private File serializedObjectRef;
 
 	/**
@@ -73,8 +76,11 @@ public class FileSystemManager {
 	}
 
 	/**
+	 * File exists.
+	 *
 	 * @param file
-	 * @return
+	 *            the file
+	 * @return true, if successful
 	 */
 	private boolean fileExists(File file) {
 
@@ -82,8 +88,11 @@ public class FileSystemManager {
 	}
 
 	/**
+	 * Delete file.
+	 *
 	 * @param file
-	 * @return
+	 *            the file
+	 * @return true, if successful
 	 */
 	private boolean deleteFile(File file) {
 
@@ -109,6 +118,35 @@ public class FileSystemManager {
 	}
 
 	/**
+	 * Creates the local workspace.
+	 *
+	 * @param sessionId
+	 *            the session id
+	 * @param contentFile
+	 *            the content file
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	public void createLocalWorkspace(String sessionId, String contentFile)
+		throws IOException {
+
+		if (instance.userHome.exists()) {
+			throw new FileAlreadyExistsException(
+				"Another instance is already running");
+		}
+
+		// create local workspace
+		// write the received base64 package
+		String path = PropertiesManager.getInstance().getValue(
+			PropertiesManager.PROPERTY_USER_BASE_HOME);
+		String plainFileName = PropertiesManager.getInstance().getValue(
+			PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
+		String file = path + "/" + sessionId + "/" + plainFileName;
+
+		IOUtility.writeDecodedContent(file, contentFile);
+	}
+
+	/**
 	 * Inits and check consistency of local workspace.
 	 *
 	 * @param id
@@ -120,14 +158,13 @@ public class FileSystemManager {
 		throws FileNotFoundException {
 
 		PropertiesManager pref = PropertiesManager.getInstance();
-		String pathHome = pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+
+		String pathHome =
+			pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+
 		File homeDir = new File(pathHome);
 		instance.sessionId = id;
 		instance.userHome = new File(homeDir, id);
-
-		if (!instance.userHome.exists()) {
-			throw new FileNotFoundException("User home folder doesn't exist!");
-		}
 
 		instance.certificate = new File(
 			pref.getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
@@ -136,16 +173,13 @@ public class FileSystemManager {
 			instance.userHome,
 			pref.getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
 
-		if (!instance.pdfDocument.exists()) {
-			throw new FileNotFoundException(
-				"Base PDF Document to sign doesn't exist!");
-		}
+		instance.pdfStrokedDoc = new File(
+			instance.userHome,
+			pref.getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT));
 
-		instance.pdfStrokedDoc = new File(instance.userHome,
-				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT));
-
-		instance.pdfEsignedDoc = new File(instance.userHome,
-				pref.getValue(PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
+		instance.pdfEsignedDoc = new File(
+			instance.userHome, pref.getValue(
+				PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
 
 		instance.imgStrokeFiles = new ArrayList<File>();
 		instance.textStrokeFiles = new ArrayList<File>();
@@ -155,13 +189,17 @@ public class FileSystemManager {
 	/**
 	 * Check consistency.
 	 *
-	 * @param sessionId the session id
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @param sessionId
+	 *            the session id
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
-	public void checkConsistency(String sessionId) throws IOException {
+	public void checkConsistency(String sessionId)
+		throws IOException {
 
 		if (!instance.sessionId.equals(sessionId))
-			throw new IllegalStateException("Inconsistency in FileSystem != sessionId");
+			throw new IllegalStateException(
+				"Inconsistency in FileSystem != sessionId");
 
 		if (!instance.userHome.exists()) {
 			throw new FileNotFoundException("User home folder doesn't exist!");
@@ -176,7 +214,8 @@ public class FileSystemManager {
 				PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT));
 
 		if (!instance.pdfDocument.exists()) {
-			throw new FileNotFoundException("PDF Document to sign doesn't exist!");
+			throw new FileNotFoundException(
+				"PDF Document to sign doesn't exist!");
 		}
 
 		if (!instance.pdfStrokedDoc.exists()) {
@@ -209,6 +248,9 @@ public class FileSystemManager {
 
 	/**
 	 * Delete on exit.
+	 *
+	 * @param doIt
+	 *            the do it
 	 */
 	public void deleteOnExit(Boolean doIt) {
 
@@ -218,7 +260,7 @@ public class FileSystemManager {
 			deleteFile(instance.pdfEsignedStampedDoc);
 			deleteFile(instance.pdfStrokedDoc);
 			deleteFile(instance.serializedObjectRef);
-			
+
 			for (File file : imgStrokeFiles) {
 				deleteFile(file);
 			}
@@ -231,9 +273,12 @@ public class FileSystemManager {
 	}
 
 	/**
-	 * 
+	 * Serialize object file.
+	 *
 	 * @param ref
+	 *            the ref
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public void serializeObjectFile(Object ref)
 		throws IOException {
@@ -243,9 +288,11 @@ public class FileSystemManager {
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Deserialize object.
+	 *
+	 * @return the object
 	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public Object deserializeObject()
 		throws IOException {
@@ -267,7 +314,8 @@ public class FileSystemManager {
 	/**
 	 * Adds the img signature file.
 	 *
-	 * @param e the e
+	 * @param e
+	 *            the e
 	 */
 	public void addImgStrokeFile(File e) {
 
@@ -277,7 +325,8 @@ public class FileSystemManager {
 	/**
 	 * Adds the text signature file.
 	 *
-	 * @param e the e
+	 * @param e
+	 *            the e
 	 */
 	public void addTextStrokeFile(File e) {
 
@@ -307,7 +356,8 @@ public class FileSystemManager {
 	/**
 	 * Sets the pdf stroked doc.
 	 *
-	 * @param pdfStrokedDoc the new pdf stroked doc
+	 * @param pdfStrokedDoc
+	 *            the new pdf stroked doc
 	 */
 	public void setPdfStrokedDoc(File pdfStrokedDoc) {
 
@@ -365,8 +415,9 @@ public class FileSystemManager {
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Gets the serialized object ref.
+	 *
+	 * @return the serialized object ref
 	 */
 	public File getSerializedObjectRef() {
 

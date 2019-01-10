@@ -44,7 +44,6 @@ public class EventLogger {
 		try {
 			String command = ("EventCreate /t " + op.name() + " /id " + instance.getNextId() + " /l " + or.name()
 					+ " /so " + appName + " /d \"" + msg + "\"");
-			System.err.println(command);
 			process = Runtime.getRuntime().exec(command);
 			process.waitFor(10, TimeUnit.SECONDS);
 			int exitValue = process.exitValue();
