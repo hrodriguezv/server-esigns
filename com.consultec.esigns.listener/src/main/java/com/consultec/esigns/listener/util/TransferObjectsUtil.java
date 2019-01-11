@@ -27,7 +27,6 @@ public class TransferObjectsUtil {
 	private static final Logger logger =
 		LoggerFactory.getLogger(TransferObjectsUtil.class);
 
-	
 	/**
 	 * Builds the payload from drive.
 	 *
@@ -75,7 +74,9 @@ public class TransferObjectsUtil {
 		List<String> imgList = new ArrayList<>();
 		for (File b : FileSystemManager.getInstance().getImageStrokeFiles()) {
 			try {
-				imgList.add(new String(FileUtils.readFileToString(b)));
+				imgList.add(
+					Base64.getEncoder().encodeToString(
+						FileUtils.readFileToByteArray(b)));
 			}
 			catch (IOException e) {
 				logger.error(formatter.format(e.getMessage()), e);
