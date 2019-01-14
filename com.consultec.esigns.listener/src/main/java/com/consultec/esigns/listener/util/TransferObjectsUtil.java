@@ -12,9 +12,11 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.consultec.esigns.core.events.EventLogger;
 import com.consultec.esigns.core.io.FileSystemManager;
 import com.consultec.esigns.core.transfer.PayloadTO;
 import com.consultec.esigns.core.transfer.PayloadTO.Stage;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The Class TransferObjectsUtil.
@@ -26,6 +28,13 @@ public class TransferObjectsUtil {
 	/** The Constant logger. */
 	private static final Logger logger =
 		LoggerFactory.getLogger(TransferObjectsUtil.class);
+
+	/**
+	 * Instantiates a new transfer objects util.
+	 */
+	private TransferObjectsUtil() {
+
+	}
 
 	/**
 	 * Builds the payload from drive.
@@ -95,6 +104,30 @@ public class TransferObjectsUtil {
 		post.setSignedDocEncoded(
 			Base64.getEncoder().encodeToString(eSignedFile));
 		return post;
+	}
+
+	/**
+	 * Read object.
+	 *
+	 * @param msg
+	 *            the msg
+	 * @return the payload TO
+	 */
+	public static PayloadTO readObject(String msg) {
+
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		try {
+			return objectMapper.readValue(msg, PayloadTO.class);
+		}
+		catch (IOException e) {
+			String msgError =
+				"Error processing message - serializing reading : [" +
+					e.getMessage() + "]";
+			logger.error(msgError, e);
+			EventLogger.getInstance().error(msgError);
+		}
+		return null;
 	}
 
 }

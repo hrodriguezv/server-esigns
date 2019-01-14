@@ -1,11 +1,15 @@
 /**
  * 
  */
+
 package com.consultec.esigns.core.util;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -25,16 +29,26 @@ import com.rabbitmq.client.MessageProperties;
 @ComponentScan
 public class MQUtility {
 
+	/** The Constant logger. */
+	private static final Logger logger =
+		LoggerFactory.getLogger(MQUtility.class);
+
 	/**
 	 * Creates the channel.
 	 *
-	 * @param host the host
-	 * @param serverName the server name
+	 * @param host
+	 *            the host
+	 * @param serverName
+	 *            the server name
 	 * @return the channel
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 * @throws TimeoutException the timeout exception
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 * @throws TimeoutException
+	 *             the timeout exception
 	 */
-	public static Channel createChannel(String host, String serverName) throws IOException, TimeoutException {
+	public static Channel createChannel(String host, String serverName)
+		throws IOException, TimeoutException {
+
 		ConnectionFactory factory = null;
 		Connection connection = null;
 		try {
@@ -44,8 +58,9 @@ public class MQUtility {
 			Channel channel = connection.createChannel();
 			channel.queueDeclare(serverName, true, false, false, null);
 			return channel;
-		} catch (Exception e) {
-			e.printStackTrace();
+		}
+		catch (Exception e) {
+			logger.error("There was an error trying to create a channel ", e);
 		}
 		return null;
 	}
@@ -62,28 +77,43 @@ public class MQUtility {
 	 * @throws Exception
 	 *             the exception
 	 */
-	public static void sendMessage(String host, String serverName, String message) throws Exception {
+	public static void sendMessage(
+		String host, String serverName, String message)
+		throws Exception {
+
 		Channel channel = null;
 		try {
 			channel = createChannel(host, serverName);
-			channel.basicPublish("", serverName, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes("UTF-8"));
-			System.out.println(" [x] Sent '" + message + "'");
-		} catch (Exception e) {
-		} finally {
-			channel.close();
+			if (channel != null)
+				channel.basicPublish(
+					"", serverName, MessageProperties.PERSISTENT_TEXT_PLAIN,
+					message.getBytes(StandardCharsets.UTF_8));
+		}
+		catch (Exception e) {
+			logger.error("There was an error trying to send a message ", e);
+		}
+		finally {
+			if (channel != null)
+				channel.close();
 		}
 	}
 
 	/**
 	 * Send message using a MQ Active implementation.
 	 *
-	 * @param configClazz the config clazz
-	 * @param senderClazz the sender clazz
-	 * @param msg the msg
+	 * @param configClazz
+	 *            the config clazz
+	 * @param senderClazz
+	 *            the sender clazz
+	 * @param msg
+	 *            the msg
 	 */
 	@SuppressWarnings("resource")
-	public static void sendMessageMQ(Class<?> configClazz, Class<?> senderClazz, String msg) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClazz);
+	public static void sendMessageMQ(
+		Class<?> configClazz, Class<?> senderClazz, String msg) {
+
+		AnnotationConfigApplicationContext context =
+			new AnnotationConfigApplicationContext(configClazz);
 		context.register(senderClazz);
 
 		IMessageSender ms = (IMessageSender) context.getBean(senderClazz);

@@ -32,7 +32,7 @@ public class ListAllCerts {
 			int i = 0;
 			// Print out all certificates found in all stores.
 			for (Enumeration<String> e = ks.aliases(); e.hasMoreElements();) {
-				alias = (String) e.nextElement();
+				alias = e.nextElement();
 				System.out.println("Alias: " + alias);
 				System.out.println(
 					"Certificate friendly name: " +
@@ -57,8 +57,7 @@ public class ListAllCerts {
 				System.out.println(certStores[i]);
 		}
 		catch (Throwable t) {
-			System.err.println("Example program failed.");
-			t.printStackTrace();
+			System.err.println("Example program failed." + t.getMessage());
 		}
 	}
 }

@@ -24,13 +24,14 @@ import com.consultec.esigns.core.util.PropertiesManager;
 public class FileSystemManager {
 
 	/** The Constant IMAGE_SRC_EXT. */
-	private final static String IMAGE_SRC_EXT =
+	private static final String IMAGE_SRC_EXT =
 		PropertiesManager.getInstance().getValue(
 			PropertiesManager.PROPERTY_USER_STROKE_IMGEXT);
 
 	/** The Constant TEXT_SRC_EXT. */
-	private final static String TEXT_SRC_EXT = PropertiesManager.getInstance().getValue(
-		PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
+	private static final String TEXT_SRC_EXT =
+		PropertiesManager.getInstance().getValue(
+			PropertiesManager.PROPERTY_USER_STROKE_TEXTEXT);
 
 	/** The user home. */
 	private File userHome;
@@ -60,7 +61,7 @@ public class FileSystemManager {
 	private static Object mutex = new Object();
 
 	/** The instance. */
-	private static volatile FileSystemManager instance;
+	private static FileSystemManager instance;
 
 	/** The session id. */
 	private String sessionId;
@@ -96,7 +97,11 @@ public class FileSystemManager {
 	 */
 	private boolean deleteFile(File file) {
 
-		return fileExists(file) ? file.delete() : false;
+		if (fileExists(file)) {
+			return file.delete();
+		}
+
+		return false;
 	}
 
 	/**
@@ -181,8 +186,8 @@ public class FileSystemManager {
 			instance.userHome, pref.getValue(
 				PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT));
 
-		instance.imgStrokeFiles = new ArrayList<File>();
-		instance.textStrokeFiles = new ArrayList<File>();
+		instance.imgStrokeFiles = new ArrayList<>();
+		instance.textStrokeFiles = new ArrayList<>();
 		instance.serializedObjectRef = new File(instance.userHome, "ref.ser");
 	}
 

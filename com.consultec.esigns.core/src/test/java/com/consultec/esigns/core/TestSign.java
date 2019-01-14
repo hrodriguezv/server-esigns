@@ -30,9 +30,9 @@ import com.itextpdf.signatures.TSAClientBouncyCastle;
 public class TestSign {
 
 	protected static final String BASEPATH =
-		"C:\\Users\\hrodriguez\\Documents\\Consultec\\dev\\Firmas digitales\\recursos\\openssl\\test-realsec\\";
+		"/Users/hrodriguez/Documents/Consultec/dev/Firmas digitales/recursos/openssl/test-realsec/";
 	protected static final String KEYSTORE = BASEPATH + "keystore.p12";
-	protected static final char[] PASSWORD = "123456".toCharArray();
+	protected static final char[] KEY = "123456".toCharArray();
 	protected static final String PDFIN =
 		BASEPATH + "Holamundo-variaspaginas.pdf";
 	protected static final String PDFOUT = BASEPATH + "file-signed.pdf";

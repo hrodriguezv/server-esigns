@@ -1,3 +1,4 @@
+
 package com.consultec.esigns.listener.config;
 
 import javax.jms.ConnectionFactory;
@@ -24,32 +25,35 @@ import com.consultec.esigns.listener.queue.MessageSender;
 public class QueueConfig implements IQueueConfig {
 
 	/** The Constant QUEUE_NAME. */
-	public static final String QUEUE_NAME = PropertiesManager.getInstance()
-			.getValue(PropertiesManager.QUEUE_SERVER_NAME);
+	public static final String QUEUE_NAME =
+		PropertiesManager.getInstance().getValue(
+			PropertiesManager.QUEUE_SERVER_NAME);
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.consultec.esigns.core.queue.IQueueConfig#connectionFactory()
 	 */
 	@Bean
 	public ConnectionFactory connectionFactory() {
+
 		PropertiesManager pref = PropertiesManager.getInstance();
-		ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(pref.getValue(PropertiesManager.QUEUE_SERVER_HOST) + ":"
-				+ pref.getValue(PropertiesManager.QUEUE_SERVER_PORT));
-		return connectionFactory;
+		return new ActiveMQConnectionFactory(
+			pref.getValue(PropertiesManager.QUEUE_SERVER_HOST) + ":" +
+				pref.getValue(PropertiesManager.QUEUE_SERVER_PORT));
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see
-	 * com.consultec.esigns.core.queue.IQueueConfig#jmsListenerContainerFactory()
+	 * com.consultec.esigns.core.queue.IQueueConfig#jmsListenerContainerFactory(
+	 * )
 	 */
 	@SuppressWarnings("rawtypes")
 	@Bean
 	public JmsListenerContainerFactory jmsListenerContainerFactory() {
-		DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+
+		DefaultJmsListenerContainerFactory factory =
+			new DefaultJmsListenerContainerFactory();
 		factory.setConnectionFactory(connectionFactory());
 		// core poll size=4 threads and max poll size 8 threads
 		factory.setConcurrency("4-8");
@@ -63,8 +67,10 @@ public class QueueConfig implements IQueueConfig {
 	 *            the msg
 	 */
 	public void sendMessageMQ(String msg) {
+
 		@SuppressWarnings("resource")
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(QueueConfig.class);
+		AnnotationConfigApplicationContext context =
+			new AnnotationConfigApplicationContext(QueueConfig.class);
 		context.register(MessageSender.class);
 		MessageSender ms = context.getBean(MessageSender.class);
 		ms.sendMessage(msg);

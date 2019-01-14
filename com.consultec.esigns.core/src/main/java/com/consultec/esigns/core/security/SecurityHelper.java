@@ -1,3 +1,4 @@
+
 package com.consultec.esigns.core.security;
 
 import java.io.FileInputStream;
@@ -32,6 +33,8 @@ import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.consultec.esigns.core.util.InetUtility;
 
@@ -42,6 +45,10 @@ import com.consultec.esigns.core.util.InetUtility;
  */
 @SuppressWarnings("deprecation")
 public class SecurityHelper {
+
+	/** The Constant logger. */
+	private static final Logger logger =
+		LoggerFactory.getLogger(SecurityHelper.class);
 
 	/** The provider. */
 	private Provider provider;
@@ -100,9 +107,7 @@ public class SecurityHelper {
 
 		SignaturePolicyId signaturePolicyId = new SignaturePolicyId(
 			asn1PolicyOid, new OtherHashAlgAndValue(hashAlg, hash));
-		SignaturePolicyIdentifier sigPolicyIdentifier =
-			new SignaturePolicyIdentifier(signaturePolicyId);
-		return sigPolicyIdentifier;
+		return new SignaturePolicyIdentifier(signaturePolicyId);
 	}
 
 	/**
@@ -147,7 +152,10 @@ public class SecurityHelper {
 				}
 			}
 			catch (CertificateEncodingException e) {
-				e.printStackTrace();
+				logger.error(
+					"Error getting the alias given the common name [" + string +
+						"]",
+					e);
 			}
 			return string.equals(alias);
 		}).map(Map.Entry::getKey).findFirst().orElse(null);
@@ -175,7 +183,7 @@ public class SecurityHelper {
 			}
 		}
 		catch (KeyStoreException | NoSuchProviderException e) {
-			e.printStackTrace();
+			logger.error("Error trying initialize the configured keystore", e);
 		}
 
 		try {
@@ -188,7 +196,7 @@ public class SecurityHelper {
 		}
 		catch (NoSuchAlgorithmException | CertificateException
 						| IOException e) {
-			e.printStackTrace();
+			logger.error("Error trying to load the configured keystore", e);
 		}
 
 		try {
@@ -201,7 +209,7 @@ public class SecurityHelper {
 		}
 		catch (UnrecoverableKeyException | KeyStoreException
 						| NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			logger.error("Error getting keys from the configured keystore", e);
 		}
 
 		try {
@@ -215,7 +223,7 @@ public class SecurityHelper {
 			}
 		}
 		catch (KeyStoreException e) {
-			e.printStackTrace();
+			logger.error("Error getting trusted chain from the configured keystore", e);
 		}
 
 		try {
@@ -229,7 +237,8 @@ public class SecurityHelper {
 			}
 		}
 		catch (KeyStoreException e) {
-			e.printStackTrace();
+			logger.error("Error getting certificates from the configured keystore", e);
+
 		}
 	}
 
