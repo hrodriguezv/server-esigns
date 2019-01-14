@@ -2,6 +2,7 @@ package com.consultec.esigns.listener.controller;
 
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -38,9 +39,15 @@ public class WebController {
 	 */
 	private String getValueFromHeaderKey(HttpHeaders headers, String key) {
 		Set<Entry<String, List<String>>> set = headers.entrySet();
-		String value = set.stream().filter(entry -> entry.getKey().equals(key)).findFirst().get().getValue().stream()
-				.findFirst().get();
-		return value;
+		Optional<Entry<String,List<String>>> value = set.stream().filter(entry -> entry.getKey().equals(key)).findFirst();
+		if (value.isPresent()) {
+			Optional<String> optionalKey = value.get().getValue().stream()
+			.findFirst();
+			if (optionalKey.isPresent()) {
+				return optionalKey.get();
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -48,7 +55,7 @@ public class WebController {
 	 *
 	 * @param pobj the pobj
 	 */
-	private static void doWork(PayloadTO pobj) {
+	private void doWork(PayloadTO pobj) {
 		try {
 			// serialize and send package to queue in form of a json object
 			ObjectMapper objectMapper = new ObjectMapper();

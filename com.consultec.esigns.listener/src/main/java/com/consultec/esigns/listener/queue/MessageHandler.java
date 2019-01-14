@@ -1,17 +1,24 @@
 
 package com.consultec.esigns.listener.queue;
 
+import static com.consultec.esigns.listener.util.ListenerConstantProperties.LOGGED_USER;
+import static com.consultec.esigns.listener.util.ListenerConstantProperties.SIGNATURE_REASON_TEXT;
+import static com.consultec.esigns.listener.util.ListenerConstantProperties.URL_TSA;
+import static com.consultec.esigns.listener.util.ListenerConstantProperties.configuredKAMode;
+
 import java.io.IOException;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import javax.jms.IllegalStateRuntimeException;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -28,12 +35,12 @@ import com.consultec.esigns.core.queue.IMessageHandler;
 import com.consultec.esigns.core.security.KeyStoreAccessMode;
 import com.consultec.esigns.core.security.SecurityHelper;
 import com.consultec.esigns.core.transfer.PayloadTO;
-import com.consultec.esigns.core.util.InetUtility;
 import com.consultec.esigns.core.util.MQUtility;
 import com.consultec.esigns.core.util.PDFSigner;
 import com.consultec.esigns.core.util.PropertiesManager;
 import com.consultec.esigns.listener.config.QueueConfig;
-import com.consultec.esigns.listener.util.ListenerConstantProperties;
+import com.consultec.esigns.listener.io.GeneralErrorListenerException;
+import com.consultec.esigns.listener.tasks.LauncherClientApp;
 import com.consultec.esigns.listener.util.TransferObjectsUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.signatures.DigestAlgorithms;
@@ -61,139 +68,124 @@ public class MessageHandler implements IMessageHandler {
 	@JmsListener(destination = "MQ_SERVER")
 	public void processMsg(String msg) {
 
-		FileSystemManager manager = FileSystemManager.getInstance();
-		ObjectMapper objectMapper = new ObjectMapper();
+		PayloadTO pobj = TransferObjectsUtil.readObject(msg);
+		if (pobj == null) {
+			throw new IllegalStateRuntimeException("Error parsing msg");
+		}
 
-		try {
-			final PayloadTO pobj = objectMapper.readValue(msg, PayloadTO.class);
-			switch (pobj.getStage()) {
-			case INIT:
+		final String sessionId = pobj.getSessionID();
+		FileSystemManager manager = FileSystemManager.getInstance();
+
+		switch (pobj.getStage()) {
+		case INIT:
+			try {
 				manager.init(pobj.getSessionID());
 				manager.createLocalWorkspace(
-					pobj.getSessionID(), pobj.getPlainDocEncoded());
+					sessionId, pobj.getPlainDocEncoded());
 				manager.serializeObjectFile(pobj);
-
 				ExecutorService executor = Executors.newSingleThreadExecutor();
-				executor.submit(() -> {
-					try {
-						ListenerConstantProperties.launchClientApp(
-							pobj.getSessionID());
-						EventLogger.getInstance().info(
-							"Se inicia el proceso de firma digital. Session ID: [" +
-								pobj.getSessionID() + "]");
-					}
-					catch (IOException e) {
-						logger.error(
-							"There was an error trying start the launcher of PDF viewer : [" +
-								e.getMessage() + "]",
-							e);
-						EventLogger.getInstance().error(
-							"Hubo un error ejecutando el launcher del visualizador de PDF's : [" +
-								e.getMessage() + "]");
-					}
-				});
-				break;
-			case MANUAL_SIGNED:
-				char[] pwd = null;
-				Optional<String> nill = Optional.ofNullable(null);
-				KeyStoreAccessMode keystoreAccess =
-					KeyStoreAccessMode.fromString(
-						ListenerConstantProperties.KEYSTORE_ACCESS_MODE);
-				try {
-					manager.checkConsistency(pobj.getSessionID());
-					if (!InetUtility.isReachable(
-						ListenerConstantProperties.URL_TSA)) {
-						logger.error(
-							"There was a timeout error because TSA Server is not reachable [" +
-								ListenerConstantProperties.URL_TSA + "]");
-					}
-					switch (keystoreAccess) {
-					case LOCAL_MACHINE:
-						JCAPISystemStoreRegistryLocation location =
-							new JCAPISystemStoreRegistryLocation(
-								JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
-						JCAPIProperties.getInstance().setSystemStoreRegistryLocation(
-							location);
+				Future<Integer> taskLauncher =
+					executor.submit(new LauncherClientApp(sessionId));
+				if (taskLauncher.isDone())
+					logger.info("Launcher client app got value :" + taskLauncher.get());
+			}
+			catch (IOException | InterruptedException | ExecutionException e1) {
+				logger.error(
+					"There was an error trying to create the workspace : [" +
+						e1.getMessage() + "]",
+					e1);
+				EventLogger.getInstance().error(
+					"Hubo un error intentando crear el workspace: [" +
+						e1.getMessage() + "]");
+				Thread.currentThread().interrupt();
+			}
+			break;
+		case MANUAL_SIGNED:
+			char[] pwd = null;
+			Optional<String> nill = Optional.ofNullable(null);
+			try {
+				manager.checkConsistency(sessionId);
 
-					case WINDOWS_MY:
-					case WINDOWS_ROOT:
-						break;
-					default:
-						nill = Optional.of(
-							manager.getCertificate().getAbsolutePath());
-						pwd = PropertiesManager.getInstance().getValue(
-							PropertiesManager.KEY_OPERATOR_CERTIFICATE).toCharArray();
-					}
+				if (configuredKAMode.equals(KeyStoreAccessMode.LOCAL_MACHINE)) {
+					JCAPISystemStoreRegistryLocation location =
+						new JCAPISystemStoreRegistryLocation(
+							JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
+					JCAPIProperties.getInstance().setSystemStoreRegistryLocation(
+						location);
+				}
+				else {
+					nill =
+						Optional.of(manager.getCertificate().getAbsolutePath());
+					pwd = PropertiesManager.getInstance().getValue(
+						PropertiesManager.KEY_OPERATOR_CERTIFICATE).toCharArray();
+				}
 
-					SecurityHelper helper = new SecurityHelper(keystoreAccess);
-					helper.init(nill, nill, pwd);
-					String alias = helper.getAlias();
-					logger.info(
-						" Getting certificates from Keystore under alias : [" +
-							alias + "]");
+				SecurityHelper helper = new SecurityHelper(configuredKAMode);
+				helper.init(nill, nill, pwd);
+				String alias = helper.getAlias();
 
-					Certificate[] signChain =
-						helper.getCertificateChainByAlias(alias);
-					PrivateKey signPrivateKey =
-						(PrivateKey) helper.getPrivateKeyByAlias(alias);
-					IExternalSignature pks = new PrivateKeySignature(
-						signPrivateKey, DigestAlgorithms.SHA256,
-						keystoreAccess.getProvider().getName());
-					Certificate certificate =
-						helper.getCertificateByAlias(alias);
+				logger.info(
+					" Getting certificates from Keystore under alias : [" +
+						alias + "]");
 
-					logger.info("Signature process is started");
+				PrivateKey signPrivateKey =
+					(PrivateKey) helper.getPrivateKeyByAlias(alias);
+				IExternalSignature pks = new PrivateKeySignature(
+					signPrivateKey, DigestAlgorithms.SHA256,
+					configuredKAMode.getProvider().getName());
 
-					PDFSigner signer = new PDFSigner.Builder(
-						keystoreAccess.getDigestProvider(), pks, certificate,
-						signChain, manager.getPdfStrokedDoc().getAbsolutePath(),
-						manager.getPdfEsignedDoc().getAbsolutePath(),
-						ListenerConstantProperties.URL_TSA).reason(
+				logger.info("Signature process is started");
+
+				PDFSigner signer = new PDFSigner.Builder(
+					configuredKAMode.getDigestProvider(), pks,
+					helper.getCertificateByAlias(alias),
+					helper.getCertificateChainByAlias(alias),
+					manager.getPdfStrokedDoc().getAbsolutePath(),
+					manager.getPdfEsignedDoc().getAbsolutePath(),
+					URL_TSA).reason(
+						Optional.of(SIGNATURE_REASON_TEXT)).location(
 							Optional.of(
-								ListenerConstantProperties.SIGNATURE_REASON_TEXT)).location(
-									Optional.of(
-										PropertiesManager.getInstance().getValue(
-											PropertiesManager.PROPERTY_USER_STROKE_LOCATION))).userName(
-												Optional.of(
-													ListenerConstantProperties.LOGGED_USER)).build();
-					signer.sign();
-					EventLogger.getInstance().info(
-						"Se ha realizado la firma electronica del documento asociado a la session : [" +
-							pobj.getSessionID() + "]");
+								PropertiesManager.getInstance().getValue(
+									PropertiesManager.PROPERTY_USER_STROKE_LOCATION))).userName(
+										Optional.of(LOGGED_USER)).build();
+				signer.sign();
 
-					if (signer.basicCheckSignedDoc()) {
-						PayloadTO p = TransferObjectsUtil.buildPayloadFromDrive();
-						objectMapper = new ObjectMapper();
-						String pckg = objectMapper.writeValueAsString(p);
-						logger.info(" Enviando paquete de vuelta a Stella ");
+				EventLogger.getInstance().info(
+					"Se ha realizado la firma electronica del documento asociado a la session : [" +
+						pobj.getSessionID() + "]");
 
-						MQUtility.sendMessageMQ(
-							QueueConfig.class, MessageSender.class, pckg);
-						Boolean doIt = Boolean.valueOf(
-							PropertiesManager.getInstance().getValue(
-								PropertiesManager.DELETE_DATA_ON_EXIT));
-						manager.deleteOnExit(doIt);
-					}
-					else {
-						throw new RuntimeException(
-							"Error trying to send PDF signed to Listener. Invalid signature");
-					}
+				if (signer.basicCheckSignedDoc()) {
+					PayloadTO p = TransferObjectsUtil.buildPayloadFromDrive();
+					ObjectMapper objectMapper = new ObjectMapper();
+					String pckg = objectMapper.writeValueAsString(p);
+					logger.info(" Enviando paquete de vuelta a Stella ");
+
+					MQUtility.sendMessageMQ(
+						QueueConfig.class, MessageSender.class, pckg);
+					Boolean doIt = Boolean.valueOf(
+						PropertiesManager.getInstance().getValue(
+							PropertiesManager.DELETE_DATA_ON_EXIT));
+					manager.deleteOnExit(doIt);
+					break;
 				}
-				catch (Throwable e) {
-					String msgError =
-						"General error trying to sign the PdfDocument with sessionid : [" +
-							pobj.getSessionID() + "]  due to [" +
-							e.getMessage() + "]";
-					logger.error(msgError, e);
-					EventLogger.getInstance().error(msgError);
-				}
-				break;
-			case E_SIGNED:
+				throw new GeneralErrorListenerException(
+					"Error trying to send PDF signed to Listener. Invalid signature");
+			}
+			catch (Exception e) {
+				String msgError =
+					"General error trying to sign the PdfDocument with sessionid : [" +
+						pobj.getSessionID() + "] - [" + e.getMessage() + "]";
+				logger.error(msgError, e);
+				EventLogger.getInstance().error(msgError);
+			}
+			break;
+		case E_SIGNED:
+			try {
 				CloseableHttpClient httpclient = HttpClients.createDefault();
 				HttpPost httpPost = new HttpPost(
 					pobj.getOrigin() +
 						"/o/api/account-opening/receive-signature");
-				objectMapper = new ObjectMapper();
+				ObjectMapper objectMapper = new ObjectMapper();
 				String pckg = objectMapper.writeValueAsString(pobj);
 				HttpEntity stringEntity =
 					new StringEntity(pckg, ContentType.APPLICATION_JSON);
@@ -207,23 +199,22 @@ public class MessageHandler implements IMessageHandler {
 					k -> httpPost.addHeader(k, header.get(k).get(0)));
 				httpPost.removeHeader(httpPost.getAllHeaders()[3]); // remueve
 																	// el length
-
-				@SuppressWarnings("unused")
-				CloseableHttpResponse response2 = httpclient.execute(httpPost);
+				httpclient.execute(httpPost);
 				EventLogger.getInstance().info(
 					"Se envia el documento relacionado a la session : [" +
 						pobj.getSessionID() + "] al servidor [" +
 						pobj.getOrigin() + "]");
-				break;
-			default:
-				break;
 			}
-		}
-		catch (IOException e) {
-			String msgError =
-				"Error processing message : [" + e.getMessage() + "]";
-			logger.error(msgError, e);
-			EventLogger.getInstance().error(msgError);
+			catch (IOException e) {
+				String msgError =
+					"General error trying to send package back to Stella : [" +
+						pobj.getSessionID() + "] - [" + e.getMessage() + "]";
+				logger.error(msgError, e);
+				EventLogger.getInstance().error(msgError);
+			}
+			break;
+		default:
+			break;
 		}
 	}
 }

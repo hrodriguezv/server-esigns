@@ -56,14 +56,14 @@ public class PayloadTO implements Serializable {
 	private String userLogged;
 
 	/** The serialized obj. */
-	private Object serializedObj;
+	private Serializable serializedObj;
 
 	/** The cookie header. */
 	private String cookieHeader;
 
 	/** The code. */
 	private String code;
-	
+
 	/**
 	 * Gets the stage.
 	 *
@@ -245,7 +245,8 @@ public class PayloadTO implements Serializable {
 	/**
 	 * Sets the origin.
 	 *
-	 * @param origin the new origin
+	 * @param origin
+	 *            the new origin
 	 */
 	public void setOrigin(String origin) {
 
@@ -265,9 +266,10 @@ public class PayloadTO implements Serializable {
 	/**
 	 * Sets the serialized obj.
 	 *
-	 * @param serializedObj the new serialized obj
+	 * @param serializedObj
+	 *            the new serialized obj
 	 */
-	public void setSerializedObj(Object serializedObj) {
+	public void setSerializedObj(Serializable serializedObj) {
 
 		this.serializedObj = serializedObj;
 	}
@@ -285,7 +287,8 @@ public class PayloadTO implements Serializable {
 	/**
 	 * Sets the cookie header.
 	 *
-	 * @param cookieHeader the new cookie header
+	 * @param cookieHeader
+	 *            the new cookie header
 	 */
 	public void setCookieHeader(String cookieHeader) {
 
@@ -298,18 +301,18 @@ public class PayloadTO implements Serializable {
 	 * @return the code
 	 */
 	public String getCode() {
-	
+
 		return code;
 	}
 
-	
 	/**
 	 * Sets the code.
 	 *
-	 * @param code the new code
+	 * @param code
+	 *            the new code
 	 */
 	public void setCode(String code) {
-	
+
 		this.code = code;
 	}
 

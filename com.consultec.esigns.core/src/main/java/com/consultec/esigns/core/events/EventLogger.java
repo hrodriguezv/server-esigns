@@ -1,55 +1,121 @@
+
 package com.consultec.esigns.core.events;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.RuntimeErrorException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.consultec.esigns.core.util.SystemCommandExecutor;
+
+/**
+ * The Class EventLogger.
+ */
 public class EventLogger {
 
+	/** The Constant logger. */
+	private static final Logger logger =
+		LoggerFactory.getLogger(EventLogger.class);
+
+	/** The instance. */
 	private static EventLogger instance;
 
 	/** The mutex. */
 	private static Object mutex = new Object();
 
-	private Integer id;
+	/** The id. */
+	private AtomicInteger id;
 
-	private final static String appName = "\"Consultec Listener\"";
+	/** The Constant appName. */
+	private static final String APP_NAME = "\"Consultec Listener\"";
 
+	/**
+	 * The Enum Operation.
+	 */
 	private enum Operation {
-		INFORMATION, ERROR, WARNING;
+
+			/** The information. */
+			INFORMATION,
+			/** The error. */
+			ERROR,
+			/** The warning. */
+			WARNING;
 	}
 
+	/**
+	 * The Enum Origin.
+	 */
 	private enum Origin {
-		APPLICATION, SYSTEM, SECURITY, INSTALLATION;
+
+			/** The application. */
+			APPLICATION,
+			/** The system. */
+			SYSTEM,
+			/** The security. */
+			SECURITY,
+			/** The installation. */
+			INSTALLATION;
 	}
 
 	/**
 	 * Instantiates a new Event Logger.
 	 */
 	private EventLogger() {
+
 	}
 
+	/**
+	 * Gets the next id.
+	 *
+	 * @return the next id
+	 */
 	private Integer getNextId() {
-		synchronized (instance.id) {
-			instance.id++;
+
+		synchronized (mutex) {
+			instance.id.incrementAndGet();
 		}
-		return instance.id;
+		return instance.id.get();
 	}
 
+	/**
+	 * Execute command.
+	 *
+	 * @param op
+	 *            the op
+	 * @param or
+	 *            the or
+	 * @param msg
+	 *            the msg
+	 */
 	private static void executeCommand(Operation op, Origin or, String msg) {
-		Process process;
+
 		try {
-			String command = ("EventCreate /t " + op.name() + " /id " + instance.getNextId() + " /l " + or.name()
-					+ " /so " + appName + " /d \"" + msg + "\"");
-			process = Runtime.getRuntime().exec(command);
-			process.waitFor(10, TimeUnit.SECONDS);
-			int exitValue = process.exitValue();
-			System.out.printf("Process exited with value %d\n", exitValue);
-		} catch (IOException | InterruptedException e) {
-			System.err.println("Error intentando enviar traza al stack de eventos de Windows" + e.getMessage());
+			String[] cmd = {
+				"cmd", "/c", "EventCreate", "/t", op.name(), "/id",
+				instance.getNextId().toString(), "/l", or.name(), "/so",
+				APP_NAME, "/d", " \"" + msg + "\""
+			};
+
+			SystemCommandExecutor commandExecutor =
+				new SystemCommandExecutor(Arrays.asList(cmd));
+			int exitValue = commandExecutor.executeCommand();
+			logger.info("Process exited with value %d %n", exitValue);
+		}
+		catch (IOException e) {
+			logger.error(
+				"Error intentando enviar traza al stack de eventos de Windows" +
+					e.getMessage());
+		}
+		catch (InterruptedException e) {
+			logger.error(
+				"Error intentando enviar traza al stack de eventos de Windows" +
+					e.getMessage());
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -59,37 +125,64 @@ public class EventLogger {
 	 * @return single instance of Event Logger
 	 */
 	public static EventLogger getInstance() {
+
 		EventLogger result = instance;
 
 		if (result == null) {
 			synchronized (mutex) {
 				result = instance;
-				if (result == null)
+				if (result == null) {
 					instance = result = new EventLogger();
+				}
 			}
 		}
 
 		return result;
 	}
 
+	/**
+	 * Inits the.
+	 */
 	public void init() {
-		String osName = System.getProperty("os.name").toUpperCase(Locale.ENGLISH);
+
+		String osName =
+			System.getProperty("os.name").toUpperCase(Locale.ENGLISH);
 		if (!osName.startsWith("WINDOWS")) {
 			throw new RuntimeErrorException(null, "Not Windows");
 		}
-		Random rand = new Random();
-		instance.id = rand.nextInt(1);
+		instance.id = new AtomicInteger(1);
 	}
 
+	/**
+	 * Error.
+	 *
+	 * @param msg
+	 *            the msg
+	 */
 	public void error(String msg) {
+
 		executeCommand(Operation.ERROR, Origin.APPLICATION, msg);
 	}
 
+	/**
+	 * Info.
+	 *
+	 * @param msg
+	 *            the msg
+	 */
 	public void info(String msg) {
+
 		executeCommand(Operation.INFORMATION, Origin.APPLICATION, msg);
 	}
 
+	/**
+	 * Warn.
+	 *
+	 * @param msg
+	 *            the msg
+	 */
 	public void warn(String msg) {
+
 		executeCommand(Operation.WARNING, Origin.APPLICATION, msg);
 	}
 }

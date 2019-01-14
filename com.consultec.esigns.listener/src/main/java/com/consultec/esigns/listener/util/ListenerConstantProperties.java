@@ -1,17 +1,15 @@
 
 package com.consultec.esigns.listener.util;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.consultec.esigns.core.security.KeyStoreAccessMode;
 import com.consultec.esigns.core.util.InetUtility;
 import com.consultec.esigns.core.util.PropertiesManager;
+import com.consultec.esigns.core.util.SystemCommandExecutor;
 
 /**
  * The Class ListenerConstantProperties.
@@ -19,10 +17,6 @@ import com.consultec.esigns.core.util.PropertiesManager;
  * @author hrodriguez
  */
 public class ListenerConstantProperties {
-
-	/** The Constant logger. */
-	private static final Logger logger =
-		LoggerFactory.getLogger(ListenerConstantProperties.class);
 
 	/** The formatter. */
 	private static MessageFormat formatter = new MessageFormat(
@@ -58,6 +52,17 @@ public class ListenerConstantProperties {
 		PropertiesManager.getInstance().getValue(
 			PropertiesManager.PROPERTY_ICEPDF_DLLS);
 
+	public static final KeyStoreAccessMode configuredKAMode =
+		KeyStoreAccessMode.fromString(
+			ListenerConstantProperties.KEYSTORE_ACCESS_MODE);
+
+	/**
+	 * Instantiates a new listener constant properties.
+	 */
+	private ListenerConstantProperties() {
+
+	}
+
 	/**
 	 * Launch client app.
 	 *
@@ -65,32 +70,28 @@ public class ListenerConstantProperties {
 	 *            the id
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
+	 * @throws InterruptedException
+	 *             the interrupted exception
 	 */
-	public static void launchClientApp(String id)
-		throws IOException {
+	public static int launchClientApp(String id)
+		throws IOException, InterruptedException {
 
-		String cmmd = ("java -Djava.library.path=\"" +
-			ListenerConstantProperties.PDFVIEWER_EXECDEP + "\"" +
-			" -jar icepdf-viewer-6.3.1-SNAPSHOT.jar -sessionid " + id);
-		System.err.println(
-			ListenerConstantProperties.PDFVIEWER_EXECPATH + " " + cmmd);
-		BufferedReader input = null;
+		String[] cmd = {
+			"java",
+			"-Djava.library.path=\"" +
+				ListenerConstantProperties.PDFVIEWER_EXECDEP + "\"",
+			"-jar", "icepdf-viewer-6.3.1-SNAPSHOT.jar", "-sessionid", id
+		};
 
-		try {
-			Process p = Runtime.getRuntime().exec(
-				cmmd, null,
-				new File(ListenerConstantProperties.PDFVIEWER_EXECPATH));
-			input =
-				new BufferedReader(new InputStreamReader(p.getErrorStream()));
+		SystemCommandExecutor commandExecutor = new SystemCommandExecutor(
+			Arrays.asList(cmd),
+			Optional.of(ListenerConstantProperties.PDFVIEWER_EXECPATH));
+		int exitValue = commandExecutor.executeCommand();
+		if (exitValue != 0) {
+			throw new IOException(
+				"Error instanciando el visualizador de PDF's");
 		}
-		catch (Exception e) {
-			logger.error(
-				"There was an error trying to launch icepdf viewer ", e);
-			e.printStackTrace();
-		}
-		finally {
-			input.close();
-		}
+		return exitValue;
 	}
 
 }

@@ -17,3 +17,5 @@ gradle
 **/.sass-cache
 **/.settings
 **/bin
+**/.scannerwork
+sonar-project.properties

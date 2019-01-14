@@ -23,3 +23,5 @@ gradle
 **/.settings
 **/bin
 **/logs
+**/.scannerwork
+sonar-project.properties

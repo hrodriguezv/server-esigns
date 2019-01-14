@@ -23,14 +23,14 @@ public class PropertiesManager {
 
 	/** The default prop file. */
 	// default file for all not specified properties
-	public static String DEFAULT_PROP_FILE = "application.properties";
+	public static final String DEFAULT_PROP_FILE = "application.properties";
 
 	/** The default prop file path. */
-	public static String DEFAULT_PROP_FILE_PATH =
+	public static final String DEFAULT_PROP_FILE_PATH =
 		"";
 
 	/** The default message bundle. */
-	public static String DEFAULT_MESSAGE_BUNDLE =
+	public static final String DEFAULT_MESSAGE_BUNDLE =
 		"com.consultec.esigns.resources.MessageBundle";
 
 	/** The properties manager. */

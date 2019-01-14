@@ -15,6 +15,7 @@ import sun.security.mscapi.SunMSCAPI;
  *
  * @author hrodriguez
  */
+@SuppressWarnings("restriction")
 public enum KeyStoreAccessMode {
 
 		/** The local machine. */
