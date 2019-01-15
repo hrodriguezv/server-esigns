@@ -38,6 +38,13 @@ public class WMICUtil {
 		".*?((?:[a-z][a-z]*[0-9]+[a-z0-9]*))";
 
 	/**
+	 * Instantiates a new WMIC util.
+	 */
+	private WMICUtil() {
+
+	}
+
+	/**
 	 * Gets the raw properties map.
 	 *
 	 * @return the raw properties map
@@ -79,7 +86,8 @@ public class WMICUtil {
 				}));
 		}
 		catch (Exception e) {
-			logger.error("Error getting buffer from the given the wmic command", e);
+			logger.error(
+				"Error getting buffer from the given the wmic command", e);
 		}
 		return map;
 	}
@@ -115,7 +123,8 @@ public class WMICUtil {
 
 		Map<String, List<String>> map = getRawPropertiesMap();
 		List<String> temp = map.get(PNP_DEVICE_ID);
-		return temp.stream().filter(string -> !string.isEmpty()).map(WMICUtil::cleanToken).collect(Collectors.toList());
+		return temp.stream().filter(string -> !string.isEmpty()).map(
+			WMICUtil::cleanToken).collect(Collectors.toList());
 	}
 
 	/**

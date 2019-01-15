@@ -2,12 +2,14 @@
  * 
  */
 
-package com.consultec.esigns.listener.io;
+package com.consultec.esigns.listener.lang;
+
+import com.consultec.esigns.core.lang.GeneralGenericException;
 
 /**
  * @author hrodriguez
  */
-public class GeneralErrorListenerException extends Exception {
+public class GeneralErrorListenerException extends GeneralGenericException {
 
 	/**
 	 * 

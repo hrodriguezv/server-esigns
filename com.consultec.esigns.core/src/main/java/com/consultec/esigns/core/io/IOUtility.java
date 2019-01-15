@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.consultec.esigns.core.io;
 
 import java.io.File;
@@ -16,6 +13,12 @@ import org.apache.commons.io.FileUtils;
  */
 public class IOUtility {
 
+	
+	/**
+	 * Instantiates a new IO utility.
+	 */
+	private IOUtility() {}
+	
 	/**
 	 * Write decoded content.
 	 *
