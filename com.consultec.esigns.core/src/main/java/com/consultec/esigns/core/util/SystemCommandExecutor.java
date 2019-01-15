@@ -70,8 +70,6 @@ public class SystemCommandExecutor {
 	public int executeCommand()
 		throws IOException, InterruptedException {
 
-		int exitValue = -99;
-
 		ProcessBuilder pb = new ProcessBuilder(commandInformation);
 
 		if (this.directory.isPresent()) {
@@ -80,38 +78,20 @@ public class SystemCommandExecutor {
 
 		Process process = pb.start();
 
-		// you need this if you're going to write something to the command's
-		// input stream
-		// (such as when invoking the 'sudo' command, and it prompts you for
-		// a password).
 		OutputStream stdOutput = process.getOutputStream();
 
-		// i'm currently doing these on a separate line here in case i need
-		// to set them to null
-		// to get the threads to stop.
-		// see
-		// http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
 		InputStream inputStream = process.getInputStream();
 		InputStream errorStream = process.getErrorStream();
 
-		// these need to run as java threads to get the standard output and
-		// error from the command.
-		// the inputstream handler gets a reference to our stdOutput in case
-		// we need to write
-		// something to it, such as with the sudo command
 		inputStreamHandler =
 			new ThreadedStreamHandler(inputStream, stdOutput, adminPassword);
 		errorStreamHandler = new ThreadedStreamHandler(errorStream);
 
-		// TODO the inputStreamHandler has a nasty side-effect of hanging if
-		// the given password is wrong; fix it
 		inputStreamHandler.start();
 		errorStreamHandler.start();
 
-		// TODO a better way to do this?
-		exitValue = process.waitFor();
+		int exitValue = process.waitFor();
 
-		// TODO a better way to do this?
 		inputStreamHandler.interrupt();
 		errorStreamHandler.interrupt();
 		inputStreamHandler.join();

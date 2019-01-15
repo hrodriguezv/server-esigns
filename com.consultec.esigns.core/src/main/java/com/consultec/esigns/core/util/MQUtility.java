@@ -34,6 +34,13 @@ public class MQUtility {
 		LoggerFactory.getLogger(MQUtility.class);
 
 	/**
+	 * Instantiates a new MQ utility.
+	 */
+	private MQUtility() {
+
+	}
+
+	/**
 	 * Creates the channel.
 	 *
 	 * @param host
@@ -78,12 +85,9 @@ public class MQUtility {
 	 *             the exception
 	 */
 	public static void sendMessage(
-		String host, String serverName, String message)
-		throws Exception {
+		String host, String serverName, String message) {
 
-		Channel channel = null;
-		try {
-			channel = createChannel(host, serverName);
+		try (Channel channel = createChannel(host, serverName)) {
 			if (channel != null)
 				channel.basicPublish(
 					"", serverName, MessageProperties.PERSISTENT_TEXT_PLAIN,
@@ -91,10 +95,6 @@ public class MQUtility {
 		}
 		catch (Exception e) {
 			logger.error("There was an error trying to send a message ", e);
-		}
-		finally {
-			if (channel != null)
-				channel.close();
 		}
 	}
 

@@ -39,7 +39,7 @@ import com.consultec.esigns.core.util.MQUtility;
 import com.consultec.esigns.core.util.PDFSigner;
 import com.consultec.esigns.core.util.PropertiesManager;
 import com.consultec.esigns.listener.config.QueueConfig;
-import com.consultec.esigns.listener.io.GeneralErrorListenerException;
+import com.consultec.esigns.listener.lang.GeneralErrorListenerException;
 import com.consultec.esigns.listener.tasks.LauncherClientApp;
 import com.consultec.esigns.listener.util.TransferObjectsUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;

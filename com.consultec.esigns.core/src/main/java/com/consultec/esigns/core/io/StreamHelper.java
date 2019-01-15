@@ -1,4 +1,3 @@
-
 package com.consultec.esigns.core.io;
 
 import java.io.ByteArrayInputStream;
@@ -12,10 +11,15 @@ import org.slf4j.LoggerFactory;
 import com.itextpdf.io.source.ByteArrayOutputStream;
 
 public class StreamHelper {
-
+	
 	/** The Constant logger. */
 	private static final Logger logger =
 		LoggerFactory.getLogger(StreamHelper.class);
+
+	/**
+	 * Instantiates a new stream helper.
+	 */
+	private StreamHelper() {}
 
 	public static <T> byte[] toStream(T obj) {
 

@@ -26,8 +26,7 @@ public class PropertiesManager {
 	public static final String DEFAULT_PROP_FILE = "application.properties";
 
 	/** The default prop file path. */
-	public static final String DEFAULT_PROP_FILE_PATH =
-		"";
+	public static final String DEFAULT_PROP_FILE_PATH = "";
 
 	/** The default message bundle. */
 	public static final String DEFAULT_MESSAGE_BUNDLE =
@@ -93,7 +92,7 @@ public class PropertiesManager {
 	/** The Constant PROPERTY_USER_STROKE_IMGEXT. */
 	public static final String PROPERTY_USER_STROKE_IMGEXT =
 		"user.default.strokeimgextension";
-	
+
 	/** The Constant PROPERTY_USER_STROKE_TEXTEXT. */
 	public static final String PROPERTY_USER_STROKE_TEXTEXT =
 		"user.default.stroketxtextension";
@@ -103,11 +102,11 @@ public class PropertiesManager {
 		"stroke.reason.value";
 
 	public static final String PROPERTY_USER_STROKE_LOCATION =
-					"stroke.location.value";
-	
+		"stroke.location.value";
+
 	/** The Constant KEYSTORE_ACCESS_MODE. */
 	public static final String KEYSTORE_ACCESS_MODE = "keystore.access.type";
-	
+
 	/** The Constant PROPERTY_USER_STROKE_IMGNAME. */
 	public static final String PROPERTY_USER_STROKE_FILENAME =
 		"user.default.strokefilebasename";
@@ -115,9 +114,9 @@ public class PropertiesManager {
 	/** The Constant DEFAULT_FORMATTER_MASK. */
 	public static final String DEFAULT_FORMATTER_MASK =
 		"stroke.dateformatter.timestamp";
-	
+
 	public static final String DELETE_DATA_ON_EXIT =
-					"stroke.delete.data.onexit";
+		"stroke.delete.data.onexit";
 
 	/** The mutex. */
 	private static Object mutex = new Object();
@@ -126,6 +125,7 @@ public class PropertiesManager {
 	 * Instantiates a new properties manager.
 	 */
 	private PropertiesManager() {
+
 	}
 
 	/**
@@ -140,7 +140,7 @@ public class PropertiesManager {
 			synchronized (mutex) {
 				result = propertiesManager;
 				if (result == null)
-					propertiesManager = result = new PropertiesManager();
+					propertiesManager = new PropertiesManager();
 				setupDefaultProperties();
 			}
 		}
@@ -167,7 +167,7 @@ public class PropertiesManager {
 					"Error loading default properties file");
 			}
 		}
-		catch (Throwable ex) {
+		catch (Exception ex) {
 			// log the error
 			if (logger.isLoggable(Level.WARNING)) {
 				logger.log(

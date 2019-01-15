@@ -50,7 +50,7 @@ public enum KeyStoreAccessMode {
 	 * @param t
 	 *            the t
 	 */
-	KeyStoreAccessMode(Provider p, IExternalDigest ix, String t) {
+	private KeyStoreAccessMode(Provider p, IExternalDigest ix, String t) {
 
 		this.provider = p;
 		this.digestProvider = ix;

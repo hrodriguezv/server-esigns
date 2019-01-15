@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sun.jna.platform.win32.Secur32;
 import com.sun.jna.platform.win32.Secur32Util;
 
@@ -19,7 +22,19 @@ import com.sun.jna.platform.win32.Secur32Util;
  */
 public class InetUtility {
 
+	/** The Constant logger. */
+	private static final Logger logger =
+		LoggerFactory.getLogger(InetUtility.class);
+
+	/** The Constant LOCALHOST. */
 	private static final String LOCALHOST = "localhost";
+
+	/**
+	 * Instantiates a new inet utility.
+	 */
+	private InetUtility() {
+
+	}
 
 	/**
 	 * Checks if a server is reachable.
@@ -37,7 +52,7 @@ public class InetUtility {
 			socket = new Socket(
 				url.getHost(), (url.getPort() < 0 ? 80 : url.getPort()));
 		}
-		catch (Throwable e) {
+		catch (Exception e) {
 			return false;
 		}
 
@@ -45,6 +60,7 @@ public class InetUtility {
 			socket.close();
 		}
 		catch (Exception e) {
+			logger.error("Error closing socket ", e);
 		}
 		return true;
 	}
@@ -62,6 +78,7 @@ public class InetUtility {
 			return inetAddress.getHostName();
 		}
 		catch (UnknownHostException e) {
+			logger.error("Error getting host name ", e);
 		}
 		return LOCALHOST;
 	}
@@ -79,7 +96,9 @@ public class InetUtility {
 				Secur32.EXTENDED_NAME_FORMAT.NameDisplay);
 		}
 		catch (Exception e) {
+			logger.error("Error getting logged user name ", e);
 		}
+		
 		return fullName;
 	}
 }

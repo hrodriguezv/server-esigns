@@ -6,10 +6,11 @@ package com.consultec.esigns.core.io;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -77,31 +78,17 @@ public class FileSystemManager {
 	}
 
 	/**
-	 * File exists.
-	 *
-	 * @param file
-	 *            the file
-	 * @return true, if successful
-	 */
-	private boolean fileExists(File file) {
-
-		return file != null && file.exists();
-	}
-
-	/**
 	 * Delete file.
 	 *
 	 * @param file
 	 *            the file
 	 * @return true, if successful
+	 * @throws IOException
 	 */
-	private boolean deleteFile(File file) {
+	private boolean deleteFile(File file)
+		throws IOException {
 
-		if (fileExists(file)) {
-			return file.delete();
-		}
-
-		return false;
+		return Files.deleteIfExists(file.toPath());
 	}
 
 	/**
@@ -228,27 +215,15 @@ public class FileSystemManager {
 				"PDF Document signed doesn't exist!");
 		}
 
-		File[] images = instance.userHome.listFiles(new FilenameFilter() {
+		File[] images = instance.userHome.listFiles(
+			(dir, name) -> name.toLowerCase().endsWith(IMAGE_SRC_EXT));
+		Arrays.asList(images).stream().forEach(
+			file -> instance.addImgStrokeFile(file));
 
-			public boolean accept(File dir, String name) {
-
-				return name.toLowerCase().endsWith(IMAGE_SRC_EXT);
-			}
-		});
-		for (File file : images) {
-			instance.addImgStrokeFile(file);
-		}
-
-		File[] strokes = instance.userHome.listFiles(new FilenameFilter() {
-
-			public boolean accept(File dir, String name) {
-
-				return name.toLowerCase().endsWith(TEXT_SRC_EXT);
-			}
-		});
-		for (File file : strokes) {
-			instance.addTextStrokeFile(file);
-		}
+		File[] strokes = instance.userHome.listFiles(
+			(dir, name) -> name.toLowerCase().endsWith(TEXT_SRC_EXT));
+		Arrays.asList(strokes).stream().forEach(
+			file -> instance.addTextStrokeFile(file));
 	}
 
 	/**
@@ -256,8 +231,10 @@ public class FileSystemManager {
 	 *
 	 * @param doIt
 	 *            the do it
+	 * @throws IOException
 	 */
-	public void deleteOnExit(Boolean doIt) {
+	public void deleteOnExit(Boolean doIt)
+		throws IOException {
 
 		if (doIt) {
 			deleteFile(instance.pdfDocument);

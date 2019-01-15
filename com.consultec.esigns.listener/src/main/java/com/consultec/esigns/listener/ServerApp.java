@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 
 import com.consultec.esigns.core.events.EventLogger;
 import com.consultec.esigns.core.util.PropertiesManager;
-import com.consultec.esigns.listener.io.GeneralErrorListenerException;
+import com.consultec.esigns.listener.lang.GeneralErrorListenerException;
 
 /**
  * The Class ServerApp.

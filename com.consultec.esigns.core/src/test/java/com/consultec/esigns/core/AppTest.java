@@ -7,7 +7,9 @@ import java.awt.GraphicsEnvironment;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.consultec.esigns.core.util.WinRegistry;
 
@@ -19,6 +21,9 @@ import junit.framework.TestSuite;
  * Unit test for simple App.
  */
 public class AppTest extends TestCase {
+
+	/** The Constant logger. */
+	private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
 
 	private static final String ERROR_TESTING_MSG = "Error testing :";
 
@@ -44,16 +49,6 @@ public class AppTest extends TestCase {
 	}
 
 	/**
-	 * Rigourous Test :-).
-	 */
-	public void app() {
-
-		Properties props = System.getProperties();
-		props.list(System.out);
-		assertTrue(true);
-	}
-
-	/**
 	 * Graphics.
 	 */
 	public void graphics() {
@@ -61,22 +56,22 @@ public class AppTest extends TestCase {
 		final GraphicsEnvironment environment =
 			GraphicsEnvironment.getLocalGraphicsEnvironment();
 		for (GraphicsDevice device : environment.getScreenDevices()) {
-			System.out.println(device);
-			System.out.println("\t" + device.getIDstring());
-			System.out.println("\t" + device.getType());
+			logger.info("\t" + device.toString());
+			logger.info("\t" + device.getIDstring());
+			logger.info("\t" + device.getType());
 		}
 
 		GraphicsEnvironment ge =
 			GraphicsEnvironment.getLocalGraphicsEnvironment();
 		GraphicsDevice[] sds = ge.getScreenDevices();
 		for (GraphicsDevice sd : sds) {
-			System.err.println(sd.getDisplayMode().getClass().getName());
-			System.err.println(sd.getIDstring());
-			System.err.println(sd.getClass().getSimpleName());
-			System.err.println(
+			logger.info(sd.getDisplayMode().getClass().getName());
+			logger.info(sd.getIDstring());
+			logger.info(sd.getClass().getSimpleName());
+			logger.info(
 				sd.getDefaultConfiguration().getBufferCapabilities().getFrontBufferCapabilities().getClass().getSimpleName());
 			GraphicsConfiguration gc = sd.getDefaultConfiguration();
-			System.err.println(gc.getClass().getSimpleName());
+			logger.info(gc.getClass().getSimpleName());
 		}
 	}
 
@@ -91,11 +86,11 @@ public class AppTest extends TestCase {
 				WinRegistry.HKEY_LOCAL_MACHINE, // HKEY
 				"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", // Key
 				"ProductName");
-			System.out.println("Windows Distribution = " + value);
+			logger.info("Windows Distribution = " + value);
 		}
 		catch (IllegalArgumentException | IllegalAccessException
 						| InvocationTargetException e) {
-			System.err.println(ERROR_TESTING_MSG + e.getMessage());
+			logger.error(ERROR_TESTING_MSG + e.getMessage());
 		} // ValueName
 
 		Map<String, String> map;
@@ -104,13 +99,13 @@ public class AppTest extends TestCase {
 				WinRegistry.HKEY_LOCAL_MACHINE,
 				"SYSTEM\\CurrentControlSet\\Enum\\DISPLAY");
 			for (Entry<String, String> key : map.entrySet()) {
-				System.err.println(key.getKey() + " - " + key.getValue());
+				logger.info(key.getKey() + " - " + key.getValue());
 			}
 
 		}
 		catch (IllegalArgumentException | IllegalAccessException
 						| InvocationTargetException e) {
-			System.err.println(ERROR_TESTING_MSG + e.getMessage());
+			logger.error(ERROR_TESTING_MSG + e.getMessage());
 		} // HKEY
 
 		try {
@@ -118,13 +113,13 @@ public class AppTest extends TestCase {
 				WinRegistry.HKEY_LOCAL_MACHINE,
 				"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
 			for (Entry<String, String> key : map.entrySet()) {
-				System.err.println(key.getKey() + " - " + key.getValue());
+				logger.info(key.getKey() + " - " + key.getValue());
 			}
 
 		}
 		catch (IllegalArgumentException | IllegalAccessException
 						| InvocationTargetException e) {
-			System.err.println(ERROR_TESTING_MSG + e.getMessage());
+			logger.error(ERROR_TESTING_MSG + e.getMessage());
 		} // HKEY
 
 	}
