@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.consultec.esigns.core.security.KeyStoreAccessMode;
-import com.consultec.esigns.core.security.SecurityHelper;
+import com.consultec.esigns.core.security.SecurityManager;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -55,9 +55,9 @@ public class TestSign {
 		Optional<String> nill = Optional.ofNullable(null);
 		KeyStoreAccessMode mode = KeyStoreAccessMode.WINDOWS_MY;
 
-		SecurityHelper helper = new SecurityHelper(mode);
-
-		helper.init(nill, nill, null);
+		SecurityManager helper = SecurityManager.getInstance();
+		
+		helper.init(mode, nill, null);
 
 		String alias = helper.getAlias();
 		signChain = helper.getCertificateChainByAlias(alias);

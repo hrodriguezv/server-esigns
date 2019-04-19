@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import org.bouncycastle.asn1.esf.SignaturePolicyIdentifier;
 
-import com.consultec.esigns.core.security.SecurityHelper;
+import com.consultec.esigns.core.security.SecurityManager;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.signatures.CrlClientOnline;
@@ -229,7 +229,7 @@ public class PDFSigner {
 		listCrl.add(crl);
 
 		SignaturePolicyIdentifier sigPolicyIdentifier =
-			SecurityHelper.getPadesEpesProfile(
+			SecurityManager.getPadesEpesProfile(
 				DigestAlgorithms.getAllowedDigest("SHA1"));
 
 		if (sigPolicyIdentifier == null) {
