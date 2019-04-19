@@ -56,7 +56,7 @@ public class PayloadTO implements Serializable {
 	private String userLogged;
 
 	/** The serialized obj. */
-	private Serializable serializedObj;
+	private Object serializedObj;
 
 	/** The cookie header. */
 	private String cookieHeader;
@@ -269,7 +269,7 @@ public class PayloadTO implements Serializable {
 	 * @param serializedObj
 	 *            the new serialized obj
 	 */
-	public void setSerializedObj(Serializable serializedObj) {
+	public void setSerializedObj(Object serializedObj) {
 
 		this.serializedObj = serializedObj;
 	}

@@ -41,6 +41,7 @@ public class SystemCommandExecutor {
 				"The commandInformation is required.");
 		this.commandInformation = commandInformation;
 		this.adminPassword = null;
+		this.directory = Optional.ofNullable(null);
 	}
 
 	/**

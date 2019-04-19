@@ -1,6 +1,5 @@
-package com.consultec.esigns.core.security;
 
-import java.security.Provider;
+package com.consultec.esigns.core.security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -19,20 +18,20 @@ import sun.security.mscapi.SunMSCAPI;
 public enum KeyStoreAccessMode {
 
 		/** The local machine. */
-		LOCAL_MACHINE(new JCAPIProvider(), new BouncyCastleDigest(), "msks"),
+		LOCAL_MACHINE(JCAPIProvider.class, new BouncyCastleDigest(), "msks"),
 
 		/** The windows my. */
-		WINDOWS_MY(new SunMSCAPI(), new BouncyCastleDigest(), "Windows-MY"),
+		WINDOWS_MY(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-MY"),
 
 		/** The windows root. */
-		WINDOWS_ROOT(new SunMSCAPI(), new BouncyCastleDigest(), "Windows-ROOT"),
+		WINDOWS_ROOT(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-ROOT"),
 
 		/** The file system. */
-		FILE_SYSTEM(new BouncyCastleProvider(), new BouncyCastleDigest(),
+		FILE_SYSTEM(BouncyCastleProvider.class, new BouncyCastleDigest(),
 			"pkcs12");
 
 	/** The provider. */
-	private Provider provider;
+	private Class<?> provider;
 
 	/** The digest provider. */
 	private IExternalDigest digestProvider;
@@ -50,7 +49,8 @@ public enum KeyStoreAccessMode {
 	 * @param t
 	 *            the t
 	 */
-	private KeyStoreAccessMode(Provider p, IExternalDigest ix, String t) {
+	private KeyStoreAccessMode(
+		Class<?> p, IExternalDigest ix, String t) {
 
 		this.provider = p;
 		this.digestProvider = ix;
@@ -62,7 +62,7 @@ public enum KeyStoreAccessMode {
 	 *
 	 * @return the provider
 	 */
-	public Provider getProvider() {
+	public Class<?> getProvider() {
 
 		return provider;
 	}
