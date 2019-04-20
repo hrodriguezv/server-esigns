@@ -1,7 +1,3 @@
-/**
- * 
- */
-
 package com.consultec.esigns.strokes.impl;
 
 import com.consultec.esigns.strokes.SignaturePadVendor;
