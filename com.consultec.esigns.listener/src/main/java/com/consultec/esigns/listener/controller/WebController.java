@@ -1,9 +1,6 @@
 package com.consultec.esigns.listener.controller;
 
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
+import static com.consultec.esigns.listener.util.HttpHeadersUtil.getValueFromHeaderKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.consultec.esigns.core.io.FileSystemManager;
 import com.consultec.esigns.core.transfer.PayloadTO;
+import com.consultec.esigns.core.transfer.PayloadTO.Stage;
 import com.consultec.esigns.core.util.MQUtility;
 import com.consultec.esigns.listener.config.QueueConfig;
 import com.consultec.esigns.listener.queue.MessageSender;
@@ -30,32 +29,7 @@ public class WebController {
 	/** The Constant logger. */
 	private static final Logger logger = LoggerFactory.getLogger(WebController.class);
 
-	/**
-	 * Gets the value from header key.
-	 *
-	 * @param headers the headers
-	 * @param key the key
-	 * @return the value from header key
-	 */
-	private String getValueFromHeaderKey(HttpHeaders headers, String key) {
-		Set<Entry<String, List<String>>> set = headers.entrySet();
-		Optional<Entry<String,List<String>>> value = set.stream().filter(entry -> entry.getKey().equals(key)).findFirst();
-		if (value.isPresent()) {
-			Optional<String> optionalKey = value.get().getValue().stream()
-			.findFirst();
-			if (optionalKey.isPresent()) {
-				return optionalKey.get();
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Do work.
-	 *
-	 * @param pobj the pobj
-	 */
-	private void doWork(PayloadTO pobj) {
+	private void receiveFile(PayloadTO pobj) {
 		try {
 			// serialize and send package to queue in form of a json object
 			ObjectMapper objectMapper = new ObjectMapper();
@@ -67,18 +41,47 @@ public class WebController {
 		}
 	}
 
-	/**
-	 * Receive.
-	 *
-	 * @param p1 the p 1
-	 * @param headers the headers
-	 */
-	@RequestMapping(value = "/receive", method = { RequestMethod.GET, RequestMethod.POST }, consumes = {
-			"application/json" })
-	public void receive(@RequestBody PayloadTO p1, @RequestHeader HttpHeaders headers) {
+	private void handleFileUpload(PayloadTO pobj) {
+		String sessionId;
+		try {
+			pobj.setStage(Stage.MANUAL_SIGNED);
+			sessionId = pobj.getSessionID();
+
+			FileSystemManager manager = FileSystemManager.getInstance();
+
+			manager.init(sessionId);
+			manager.createLocalWorkspace(pobj.getStage(), sessionId, pobj.getPlainDocEncoded());
+
+			manager.serializeObjectFile(pobj);
+			// storageService.store(file);
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			String pckg = objectMapper.writeValueAsString(pobj);
+
+			MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
+
+		} catch (Exception e) {
+			logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
+		}
+	}
+
+	private PayloadTO setDefaultValuesToWrapper(PayloadTO p1, HttpHeaders headers) {
 		p1.setSessionID(getValueFromHeaderKey(headers, "ngsesid"));
 		p1.setOrigin(getValueFromHeaderKey(headers, "origin"));
 		p1.setSerializedObj(headers);
-		doWork(p1);
+		return p1;
 	}
+
+	@RequestMapping(value = "/receive", method = { RequestMethod.GET, RequestMethod.POST }, consumes = {
+			"application/json" })
+	public void receive(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
+		receiveFile(setDefaultValuesToWrapper(jsonReference, headers));
+	}
+
+	@RequestMapping(value = "/upload", method = { RequestMethod.GET, RequestMethod.POST }, consumes = {
+			"application/json" })
+	public void upload(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
+		handleFileUpload(setDefaultValuesToWrapper(jsonReference, headers));
+	}
+
 }
