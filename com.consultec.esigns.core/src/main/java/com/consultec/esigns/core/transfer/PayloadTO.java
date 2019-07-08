@@ -25,7 +25,9 @@ public class PayloadTO implements Serializable {
 			/** The e signed. */
 			E_SIGNED,
 			/** The completed. */
-			COMPLETED
+			COMPLETED, 
+			
+			ERROR
 	}
 
 	/** The stage. */

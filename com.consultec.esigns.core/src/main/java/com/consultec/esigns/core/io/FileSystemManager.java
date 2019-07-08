@@ -7,6 +7,7 @@ package com.consultec.esigns.core.io;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -81,8 +82,24 @@ public class FileSystemManager {
    * @throws IOException Signals that an I/O exception has occurred.
    */
   private boolean deleteFile(File file) throws IOException {
+    return (file != null) ? freeResourcesAndDelete(file) : false;
+  }
 
-    return (file!=null)?Files.deleteIfExists(file.toPath()):false;
+  /**
+   * 
+   * @param file
+   * @return
+   * @throws IOException
+   */
+  private boolean freeResourcesAndDelete(File file) throws IOException {
+
+    if (!file.isDirectory()) {
+      RandomAccessFile raf = new RandomAccessFile(file, "rw");
+      raf.close();
+    }
+  
+    return Files.deleteIfExists(file.toPath());
+  
   }
 
   /**
