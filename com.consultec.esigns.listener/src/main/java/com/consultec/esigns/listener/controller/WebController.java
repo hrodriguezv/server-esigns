@@ -17,6 +17,7 @@ import com.consultec.esigns.core.transfer.PayloadTO.Stage;
 import com.consultec.esigns.core.util.MQUtility;
 import com.consultec.esigns.listener.config.QueueConfig;
 import com.consultec.esigns.listener.queue.MessageSender;
+import com.consultec.esigns.listener.util.ListenerErrorTreatmentUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -26,62 +27,101 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RequestMapping("/files") // RequestMapping for Class
 public class WebController {
 
-	/** The Constant logger. */
-	private static final Logger logger = LoggerFactory.getLogger(WebController.class);
+  /** The Constant logger. */
+  private static final Logger logger = LoggerFactory.getLogger(WebController.class);
 
-	private void receiveFile(PayloadTO pobj) {
-		try {
-			// serialize and send package to queue in form of a json object
-			ObjectMapper objectMapper = new ObjectMapper();
-			String pckg = objectMapper.writeValueAsString(pobj);
+  /**
+   * Convert the object to a json reference and send it to queue to follow the configured flow.
+   *
+   * @param pobj
+   */
+  private void receiveFile(PayloadTO pobj) {
+    
+    try {
+    
+      // serialize and send package to queue in form of a json object
+      ObjectMapper objectMapper = new ObjectMapper();
+      String pckg = objectMapper.writeValueAsString(pobj);
 
-			MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
-		} catch (Exception e) {
-			logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
-		}
-	}
+      MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
+    
+    } catch (Exception e) {
+    
+      logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
+      ListenerErrorTreatmentUtil.treatTheError(pobj, e, true);
+    
+    }
+    
+  }
 
-	private void handleFileUpload(PayloadTO pobj) {
-		String sessionId;
-		try {
-			pobj.setStage(Stage.MANUAL_SIGNED);
-			sessionId = pobj.getSessionID();
+  /**
+   * Performs required actions to handle the payload received in order to process it as a file on
+   * the local file-system.
+   *
+   * @param pobj
+   */
+  private void handleFileUpload(PayloadTO pobj) {
+    String sessionId;
 
-			FileSystemManager manager = FileSystemManager.getInstance();
+    try {
 
-			manager.init(sessionId);
-			manager.createLocalWorkspace(pobj.getStage(), sessionId, pobj.getPlainDocEncoded());
+      pobj.setStage(Stage.MANUAL_SIGNED);
+      sessionId = pobj.getSessionID();
 
-			manager.serializeObjectFile(pobj);
-			// storageService.store(file);
+      FileSystemManager manager = FileSystemManager.getInstance();
 
-			ObjectMapper objectMapper = new ObjectMapper();
-			String pckg = objectMapper.writeValueAsString(pobj);
+      manager.init(sessionId);
+      manager.createLocalWorkspace(pobj.getStage(), sessionId, pobj.getPlainDocEncoded());
 
-			MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
+      manager.serializeObjectFile(pobj);
 
-		} catch (Exception e) {
-			logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
-		}
-	}
+      ObjectMapper objectMapper = new ObjectMapper();
+      String pckg = objectMapper.writeValueAsString(pobj);
 
-	private PayloadTO setDefaultValuesToWrapper(PayloadTO p1, HttpHeaders headers) {
-		p1.setSessionID(getValueFromHeaderKey(headers, "ngsesid"));
-		p1.setOrigin(getValueFromHeaderKey(headers, "origin"));
-		p1.setSerializedObj(headers);
-		return p1;
-	}
+      MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
 
-	@RequestMapping(value = "/receive", method = { RequestMethod.GET, RequestMethod.POST }, consumes = {
-			"application/json" })
-	public void receive(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
-		receiveFile(setDefaultValuesToWrapper(jsonReference, headers));
-	}
+    } catch (Exception e) {
 
-	@RequestMapping(value = "/upload", method = { RequestMethod.GET, RequestMethod.POST }, consumes = {
-			"application/json" })
-	public void upload(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
-		handleFileUpload(setDefaultValuesToWrapper(jsonReference, headers));
-	}
+      logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
+      ListenerErrorTreatmentUtil.treatTheError(pobj, e, true);
+
+    }
+  }
+
+  /**
+   * Inspects the headers and set the required values to the payload reference.
+   *
+   * @param payload
+   * @param headers
+   * @return
+   */
+  private PayloadTO setDefaultValuesToWrapper(PayloadTO payload, HttpHeaders headers) {
+    payload.setSessionID(getValueFromHeaderKey(headers, "ngsesid"));
+    payload.setOrigin(getValueFromHeaderKey(headers, "origin"));
+    payload.setSerializedObj(headers);
+    return payload;
+  }
+
+  @RequestMapping(
+      value = "/receive",
+      method = {
+          RequestMethod.GET,
+          RequestMethod.POST},
+      consumes = {
+          "application/json"})
+  public void receive(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
+    receiveFile(setDefaultValuesToWrapper(jsonReference, headers));
+  }
+
+  @RequestMapping(
+      value = "/upload",
+      method = {
+          RequestMethod.GET,
+          RequestMethod.POST},
+      consumes = {
+          "application/json"})
+  public void upload(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
+    handleFileUpload(setDefaultValuesToWrapper(jsonReference, headers));
+  }
 
 }
