@@ -12,6 +12,8 @@
  <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <consultec.workspace.path>/opt/workspace/</consultec.workspace.path>
+    <icepdf.target.folder>${consultec.workspace.path}/icepdf/</icepdf.target.folder>
   </properties>
  
   <modules>
