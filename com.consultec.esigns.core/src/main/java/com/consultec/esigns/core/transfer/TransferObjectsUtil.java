@@ -50,8 +50,8 @@ public class TransferObjectsUtil {
       post = (PayloadTO) FileSystemManager.getInstance().deserializeObject();
 
     } catch (IOException e1) {
-
-      logger.error(formatter.format(e1.getMessage()), e1);
+      String result = MessageFormat.format("Error building JSON Object: [{0}]", e1.getMessage());
+      logger.error(result, e1);
       post = new PayloadTO();
 
     }
