@@ -15,11 +15,14 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERObjectIdentifier;
@@ -59,13 +62,13 @@ public class SecurityManager {
   private KeyStoreAccessMode mode;
 
   /** The map keys. */
-  private Map<String, Key> mapKeys;
+  private Map<String, Key> keys;
 
   /** The map trusted chain. */
-  private Map<String, Certificate[]> mapTrustedChain;
+  private Map<String, Certificate[]> trustedChains;
 
   /** The map certificate. */
-  private Map<String, X509Certificate> mapCertificate;
+  private Map<String, X509Certificate> certificates;
 
   /** The instance. */
   private static SecurityManager instance;
@@ -74,18 +77,16 @@ public class SecurityManager {
 
   /**
    * Instantiates a new security provider.
-   *
-   * @param mode the mode
-   * @throws IllegalAccessException
-   * @throws InstantiationException
    */
   private SecurityManager() {}
 
   /**
-   * @param clazz
-   * @return
-   * @throws InstantiationException
-   * @throws IllegalAccessException
+   * Gets the new instance provider.
+   *
+   * @param clazz the clazz
+   * @return the new instance provider
+   * @throws InstantiationException the instantiation exception
+   * @throws IllegalAccessException the illegal access exception
    */
   private static Provider getNewInstanceProvider(Class<?> clazz)
       throws InstantiationException, IllegalAccessException {
@@ -93,6 +94,11 @@ public class SecurityManager {
     return (Provider) clazz.newInstance();
   }
 
+  /**
+   * Gets the single instance of SecurityManager.
+   *
+   * @return single instance of SecurityManager
+   */
   public static SecurityManager getInstance() {
 
     SecurityManager result = instance;
@@ -141,7 +147,8 @@ public class SecurityManager {
 
     switch (mode) {
       case FILE_SYSTEM:
-        return this.getAliases().next();
+        Iterator<String> aliases = getAliases();
+        return aliases.hasNext() ? aliases.next() : null;
       case WINDOWS_MY:
       case WINDOWS_ROOT:
         return InetUtility.getLoggedUserNameExt();
@@ -150,12 +157,21 @@ public class SecurityManager {
       default:
         break;
     }
+
     return null;
   }
 
+  /**
+   * Gets the configured key store.
+   *
+   * @return the configured key store
+   * @throws KeyStoreException the key store exception
+   * @throws NoSuchProviderException the no such provider exception
+   */
   private KeyStore getConfiguredKeyStore() throws KeyStoreException, NoSuchProviderException {
 
     switch (instance.mode) {
+
       case FILE_SYSTEM:
         return KeyStore.getInstance(mode.getType(), getProviderName());
       case WINDOWS_MY:
@@ -165,100 +181,208 @@ public class SecurityManager {
       default:
         break;
     }
+
     return null;
+
   }
 
   /**
    * Gets the alias by common name.
    *
-   * @param string the string
+   * @param commonName the string
    * @return the alias by common name
    */
-  private String getAliasByCommonName(String string) {
+  private String getAliasByCommonName(String commonName) {
 
-    return mapCertificate.entrySet().stream().filter(entry -> {
-      String alias = null;
-      X500Name x500name;
-      try {
-        x500name = new JcaX509CertificateHolder(entry.getValue()).getSubject();
-        if (x500name.getRDNs(BCStyle.CN).length > 0) {
-          RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-          alias = IETFUtils.valueToString(cn.getFirst().getValue());
-        }
-      } catch (CertificateEncodingException e) {
-        logger.error("Error getting the alias given the common name [" + string + "]", e);
+    Predicate<Entry<String, X509Certificate>> filterByCommonName =
+        new Predicate<Entry<String, X509Certificate>>() {
+
+          @Override
+          public boolean test(Entry<String, X509Certificate> p) {
+            String alias = null;
+
+            try {
+
+              X500Name x500name = new JcaX509CertificateHolder(p.getValue()).getSubject();
+
+              if (x500name.getRDNs(BCStyle.CN).length > 0) {
+                RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+                alias = IETFUtils.valueToString(cn.getFirst().getValue());
+              }
+
+            } catch (CertificateEncodingException e) {
+
+              logger.error("Error getting the alias given the common name [" + commonName + "]", e);
+
+            }
+
+            return commonName.equals(alias);
+          }
+
+        };
+
+    return (certificates != null)
+        ? certificates.entrySet().stream().filter(filterByCommonName).map(Map.Entry::getKey)
+            .findFirst().orElse(null)
+        : null;
+  }
+
+  /**
+   * Initialize all security objects required to sign documents.
+   * 
+   * @param mode the mode
+   * @param p12file the p 12 file
+   * @param pwd the pwd
+   * @param safe the safe
+   */
+  private void init(KeyStoreAccessMode mode, Optional<String> p12file, char[] pwd, boolean safe) {
+
+    try {
+
+      setUp(mode, p12file, pwd);
+
+    } catch (java.lang.Error e) {
+
+      // A runtime error could be thrown in case of JCAPI can't be loaded
+      logger.error("[FATAL] Error caused by :", e);
+
+    }
+
+    if (safe) {
+
+      while (getAlias() == null
+          && (instance.mode.ordinal() < KeyStoreAccessMode.values().length - 1)) {
+        setUp(KeyStoreAccessMode.values()[instance.mode.ordinal() + 1], p12file, pwd);
       }
-      return string.equals(alias);
-    }).map(Map.Entry::getKey).findFirst().orElse(null);
+
+      if (getAlias() == null) {
+
+        throw new IllegalStateException(
+            "Can't find the correct settings to load security configuration");
+      }
+
+    }
+
+  }
+
+  /**
+   * Set up all required references to get a valid state of this singleton.
+   *
+   * @param mode the mode
+   * @param p12file the p 12 file
+   * @param pwd the pwd
+   */
+  private void setUp(KeyStoreAccessMode mode, Optional<String> p12file, char[] pwd) {
+
+    try {
+
+      instance.mode = mode;
+      instance.provider = getNewInstanceProvider(mode.getProvider());
+      Security.addProvider(provider);
+
+    } catch (InstantiationException | IllegalAccessException e1) {
+
+      logger.error("Error trying initialize the configured keystore", e1);
+      throw new IllegalStateException("Error trying initialize the configured keystore", e1);
+
+    }
+
+    try {
+
+      keyStore = getConfiguredKeyStore();
+
+    } catch (KeyStoreException | NoSuchProviderException e) {
+
+      logger.error("Error trying initialize the configured keystore", e);
+
+    }
+
+    try {
+
+      if (p12file.isPresent()) {
+
+        keyStore.load(new FileInputStream(p12file.get()), pwd);
+
+      } else {
+
+        keyStore.load(null, pwd);
+
+      }
+
+    } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+
+      logger.error("Error trying to load the configured keystore", e);
+
+    }
+
+    try {
+
+      keys = new HashMap<>();
+      Enumeration<String> aliases = keyStore.aliases();
+      while (aliases.hasMoreElements()) {
+        String element = aliases.nextElement();
+        keys.put(element, keyStore.getKey(element, pwd));
+      }
+
+    } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+
+      logger.error("Error getting keys from the configured keystore", e);
+
+    }
+
+    try {
+
+      trustedChains = new HashMap<>();
+      Enumeration<String> aliases = keyStore.aliases();
+      while (aliases.hasMoreElements()) {
+        String element = aliases.nextElement();
+        trustedChains.put(element, (Certificate[]) keyStore.getCertificateChain(element));
+      }
+
+    } catch (KeyStoreException e) {
+
+      logger.error("Error getting trusted chain from the configured keystore", e);
+
+    }
+
+    try {
+
+      certificates = new HashMap<>();
+      Enumeration<String> aliases = keyStore.aliases();
+      while (aliases.hasMoreElements()) {
+        String element = aliases.nextElement();
+        certificates.put(element, (X509Certificate) keyStore.getCertificate(element));
+      }
+
+    } catch (KeyStoreException e) {
+
+      logger.error("Error getting certificates from the configured keystore", e);
+
+    }
+
+  }
+
+  /**
+   * Allows perform the initial process of this singleton and it ensure to set at least a valid
+   * configuration. Otherwise an IllegalStateException is thrown.
+   *
+   * @param mode the mode
+   * @param p12file the p 12 file
+   * @param pwd the pwd
+   */
+  public void safeInit(KeyStoreAccessMode mode, Optional<String> p12file, char[] pwd) {
+    init(mode, p12file, pwd, true);
   }
 
   /**
    * Initialize all security objects required to sign documents.
    *
-   * @param provider the provider
+   * @param mode the mode
    * @param p12file the p 12 file
    * @param pwd the pwd
    */
   public void init(KeyStoreAccessMode mode, Optional<String> p12file, char[] pwd) {
-
-    try {
-      instance.mode = mode;
-      instance.provider = getNewInstanceProvider(mode.getProvider());
-      Security.addProvider(provider);
-    } catch (InstantiationException | IllegalAccessException e1) {
-      logger.error("Error trying initialize the configured keystore", e1);
-      throw new IllegalStateException("Error trying initialize the configured keystore", e1);
-    }
-
-    try {
-      keyStore = getConfiguredKeyStore();
-    } catch (KeyStoreException | NoSuchProviderException e) {
-      logger.error("Error trying initialize the configured keystore", e);
-    }
-
-    try {
-      if (p12file.isPresent()) {
-        keyStore.load(new FileInputStream(p12file.get()), pwd);
-      } else {
-        keyStore.load(null, pwd);
-      }
-    } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
-      logger.error("Error trying to load the configured keystore", e);
-    }
-
-    try {
-      mapKeys = new HashMap<>();
-      Enumeration<String> aliases = keyStore.aliases();
-      while (aliases.hasMoreElements()) {
-        String element = aliases.nextElement();
-        mapKeys.put(element, keyStore.getKey(element, pwd));
-      }
-    } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
-      logger.error("Error getting keys from the configured keystore", e);
-    }
-
-    try {
-      mapTrustedChain = new HashMap<>();
-      Enumeration<String> aliases = keyStore.aliases();
-      while (aliases.hasMoreElements()) {
-        String element = aliases.nextElement();
-        mapTrustedChain.put(element, (Certificate[]) keyStore.getCertificateChain(element));
-      }
-    } catch (KeyStoreException e) {
-      logger.error("Error getting trusted chain from the configured keystore", e);
-    }
-
-    try {
-      mapCertificate = new HashMap<>();
-      Enumeration<String> aliases = keyStore.aliases();
-      while (aliases.hasMoreElements()) {
-        String element = aliases.nextElement();
-        mapCertificate.put(element, (X509Certificate) keyStore.getCertificate(element));
-      }
-    } catch (KeyStoreException e) {
-      logger.error("Error getting certificates from the configured keystore", e);
-
-    }
+    init(mode, p12file, pwd, false);
   }
 
   /**
@@ -288,7 +412,7 @@ public class SecurityManager {
    */
   public Map<String, Key> getMapKeys() {
 
-    return mapKeys;
+    return keys;
   }
 
   /**
@@ -299,7 +423,7 @@ public class SecurityManager {
    */
   public Key getPrivateKeyByAlias(String alias) {
 
-    return mapKeys.get(alias);
+    return keys.get(alias);
   }
 
   /**
@@ -307,9 +431,10 @@ public class SecurityManager {
    *
    * @return the aliases
    */
+  @SuppressWarnings("unchecked")
   public Iterator<String> getAliases() {
 
-    return mapKeys.keySet().iterator();
+    return keys.keySet().isEmpty() ? Collections.EMPTY_SET.iterator() : keys.keySet().iterator();
   }
 
   /**
@@ -320,7 +445,7 @@ public class SecurityManager {
    */
   public Certificate[] getCertificateChainByAlias(String alias) {
 
-    return mapTrustedChain.get(alias);
+    return trustedChains.get(alias);
   }
 
   /**
@@ -330,7 +455,7 @@ public class SecurityManager {
    */
   public Map<String, Certificate[]> getMapTrustedChain() {
 
-    return mapTrustedChain;
+    return trustedChains;
   }
 
   /**
@@ -340,7 +465,7 @@ public class SecurityManager {
    */
   public Map<String, X509Certificate> getMapCertificate() {
 
-    return mapCertificate;
+    return certificates;
   }
 
   /**
@@ -351,6 +476,6 @@ public class SecurityManager {
    */
   public Certificate getCertificateByAlias(String alias) {
 
-    return mapCertificate.get(alias);
+    return certificates.get(alias);
   }
 }

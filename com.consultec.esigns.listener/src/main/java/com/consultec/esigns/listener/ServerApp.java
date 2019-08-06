@@ -61,7 +61,7 @@ public class ServerApp {
           .toCharArray();
     }
 
-    SecurityManager.getInstance().init(KEYSTORE_ACCESS_CONFIGURED, p12, pwd);
+    SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED, p12, pwd);
     EventLogger.getInstance().init();
     EventLogger.getInstance()
         .info("Se ha iniciado correctamente el Servicio de registro de firmas electronicas");
