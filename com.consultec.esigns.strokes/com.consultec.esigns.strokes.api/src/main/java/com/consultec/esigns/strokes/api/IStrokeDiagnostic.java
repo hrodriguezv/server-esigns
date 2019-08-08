@@ -10,4 +10,5 @@ package com.consultec.esigns.strokes.api;
 public interface IStrokeDiagnostic {
 
   boolean test();
+
 }

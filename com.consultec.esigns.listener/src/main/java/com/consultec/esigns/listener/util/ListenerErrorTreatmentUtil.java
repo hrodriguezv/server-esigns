@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 
 import com.consultec.esigns.core.events.EventLogger;
@@ -18,15 +16,16 @@ import com.consultec.esigns.core.transfer.PayloadTO;
 import com.consultec.esigns.core.transfer.PayloadTO.Stage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class ListenerErrorTreatmentUtil {
 
-  /** The Constant logger. */
-  private static final Logger logger = LoggerFactory.getLogger(ListenerErrorTreatmentUtil.class);
-
   private static Map<String, List<String>> transformHeaders(HttpHeaders headers) {
-    Map<String, List<String>> map = headers.entrySet().stream()
+
+    return headers.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    return map;
+
   }
 
   @SuppressWarnings("unchecked")
@@ -38,17 +37,20 @@ public class ListenerErrorTreatmentUtil {
 
     try {
 
-      logger.error(msgError, e);
+      log.error(msgError, e);
       EventLogger.getInstance().error(msgError);
-      IPostHttpClient httpPost = new HttpPostClientImpl(
-          pobj.getOrigin() + "/o/api/account-opening/receive-status");
+
+      IPostHttpClient httpPost = new HttpPostClientImpl(pobj.getCallbackUrl());
+
       pobj.setStage(Stage.ERROR);
+
       ObjectMapper objectMapper = new ObjectMapper();
       String pckg = objectMapper.writeValueAsString(pobj);
       HttpEntity stringEntity = new StringEntity(pckg, ContentType.APPLICATION_JSON);
 
       httpPost.setEntity(stringEntity);
       httpPost.setCookie(pobj.getCookieHeader());
+
       if (transformHeader) {
 
         httpPost.fillHeader(transformHeaders((HttpHeaders) pobj.getSerializedObj()));
@@ -65,7 +67,8 @@ public class ListenerErrorTreatmentUtil {
 
       msgError = "Error intentando enviar el error de vuelta a Stella sessionid : ["
           + pobj.getSessionID() + "] - [" + e2.getMessage() + "]";
-      logger.error(msgError, e2);
+
+      log.error(msgError, e2);
       EventLogger.getInstance().error(msgError);
 
     }

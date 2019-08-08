@@ -45,13 +45,16 @@ public class TransferObjectsUtil {
     MessageFormat formatter = new MessageFormat(errorMsg);
 
     PayloadTO post;
+
     try {
 
       post = (PayloadTO) FileSystemManager.getInstance().deserializeObject();
 
     } catch (IOException e1) {
+
       String result = MessageFormat.format("Error building JSON Object: [{0}]", e1.getMessage());
       logger.error(result, e1);
+
       post = new PayloadTO();
 
     }
@@ -62,10 +65,12 @@ public class TransferObjectsUtil {
     if (FileSystemManager.getInstance().getPdfStrokedDoc().exists()) {
 
       byte[] strokedFile = null;
+
       try {
 
         strokedFile =
             FileUtils.readFileToByteArray(FileSystemManager.getInstance().getPdfStrokedDoc());
+
         post.setStrokedDocEncoded(Base64.getEncoder().encodeToString(strokedFile));
 
       } catch (IOException e) {
@@ -77,6 +82,7 @@ public class TransferObjectsUtil {
     }
 
     List<String> strokeList = new ArrayList<>();
+
     for (File b : FileSystemManager.getInstance().getTextStrokeFiles()) {
 
       try {
@@ -90,9 +96,11 @@ public class TransferObjectsUtil {
       }
 
     }
+
     post.setStrokes(strokeList.toArray(new String[0]));
 
     List<String> imgList = new ArrayList<>();
+    
     for (File b : FileSystemManager.getInstance().getImageStrokeFiles()) {
 
       try {
@@ -112,6 +120,7 @@ public class TransferObjectsUtil {
     if (FileSystemManager.getInstance().getPdfEsignedDoc().exists()) {
 
       byte[] eSignedFile = null;
+      
       try {
 
         eSignedFile =
@@ -140,13 +149,21 @@ public class TransferObjectsUtil {
     ObjectMapper objectMapper = new ObjectMapper();
 
     try {
+
       return objectMapper.readValue(msg, PayloadTO.class);
+
     } catch (IOException e) {
+
       String msgError = "Error processing message - serializing reading : [" + e.getMessage() + "]";
+
       logger.error(msgError, e);
+
       EventLogger.getInstance().error(msgError);
+
     }
+
     return null;
+
   }
 
 }

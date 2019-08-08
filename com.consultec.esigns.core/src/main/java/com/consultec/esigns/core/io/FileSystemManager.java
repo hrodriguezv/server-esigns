@@ -94,12 +94,15 @@ public class FileSystemManager {
   private boolean freeResourcesAndDelete(File file) throws IOException {
 
     if (!file.isDirectory()) {
+
       RandomAccessFile raf = new RandomAccessFile(file, "rw");
+
       raf.close();
+
     }
-  
+
     return Files.deleteIfExists(file.toPath());
-  
+
   }
 
   /**
@@ -110,14 +113,22 @@ public class FileSystemManager {
   public static FileSystemManager getInstance() {
 
     FileSystemManager result = instance;
+
     if (result == null) {
+
       synchronized (mutex) {
         result = instance;
-        if (result == null)
+
+        if (result == null) {
           instance = result = new FileSystemManager();
+        }
+
       }
+
     }
+
     return result;
+
   }
 
   /**
@@ -137,11 +148,14 @@ public class FileSystemManager {
     // write the received base64 package
     String path =
         PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
+
     String fileName =
         PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
+
     String file = path + "/" + sessionId + "/" + fileName;
 
     IOUtility.writeDecodedContent(file, contentFile);
+
   }
 
   /**
@@ -156,26 +170,38 @@ public class FileSystemManager {
       throws IOException {
 
     String fileName;
+
     String path =
         PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
 
     switch (stage) {
+
       case INIT:
+
         fileName = PropertiesManager.getInstance()
             .getValue(PropertiesManager.PROPERTY_USER_HOME_PDFDOCUMENT);
+
         break;
+
       case MANUAL_SIGNED:
+
         fileName = PropertiesManager.getInstance()
             .getValue(PropertiesManager.PROPERTY_USER_HOME_STROKEDOCUMENT);
+
         break;
+
       default:
+
         fileName = PropertiesManager.getInstance()
             .getValue(PropertiesManager.PROPERTY_USER_HOME_ESIGNEDDOCUMENT);
+
         break;
+
     }
 
     String file = path + "/" + sessionId + "/" + fileName;
     IOUtility.writeDecodedContent(file, contentFile);
+
   }
 
   /**
@@ -191,6 +217,7 @@ public class FileSystemManager {
     String pathHome = pref.getValue(PropertiesManager.PROPERTY_USER_BASE_HOME);
 
     File homeDir = new File(pathHome);
+
     instance.sessionId = id;
     instance.userHome = new File(homeDir, id);
 
@@ -206,6 +233,7 @@ public class FileSystemManager {
     instance.imgStrokeFiles = new ArrayList<>();
     instance.textStrokeFiles = new ArrayList<>();
     instance.serializedObjectRef = new File(instance.userHome, "ref.ser");
+
   }
 
   /**
@@ -216,8 +244,9 @@ public class FileSystemManager {
    */
   public void checkConsistency(String sessionId) throws IOException {
 
-    if (!instance.sessionId.equals(sessionId))
+    if (!instance.sessionId.equals(sessionId)) {
       throw new IllegalStateException("Inconsistency in FileSystem != sessionId");
+    }
 
     if (!instance.userHome.exists()) {
       throw new FileNotFoundException("User home folder doesn't exist!");
@@ -232,10 +261,12 @@ public class FileSystemManager {
 
     File[] images =
         instance.userHome.listFiles((dir, name) -> name.toLowerCase().endsWith(IMAGE_SRC_EXT));
+
     Arrays.asList(images).stream().forEach(file -> instance.addImgStrokeFile(file));
 
     File[] strokes =
         instance.userHome.listFiles((dir, name) -> name.toLowerCase().endsWith(TEXT_SRC_EXT));
+
     Arrays.asList(strokes).stream().forEach(file -> instance.addTextStrokeFile(file));
   }
 
@@ -248,6 +279,7 @@ public class FileSystemManager {
   public void deleteOnExit(Boolean doIt) throws IOException {
 
     if (doIt) {
+
       deleteFile(instance.pdfDocument);
       deleteFile(instance.pdfEsignedDoc);
       deleteFile(instance.pdfEsignedStampedDoc);
@@ -261,8 +293,11 @@ public class FileSystemManager {
       for (File file : textStrokeFiles) {
         deleteFile(file);
       }
+
       deleteFile(instance.userHome);
+
     }
+
   }
 
   /**
@@ -274,6 +309,7 @@ public class FileSystemManager {
   public void serializeObjectFile(Object ref) throws IOException {
 
     FileUtils.writeByteArrayToFile(instance.serializedObjectRef, StreamHelper.toStream(ref));
+
   }
 
   /**
@@ -285,6 +321,7 @@ public class FileSystemManager {
   public Object deserializeObject() throws IOException {
 
     return StreamHelper.fromStream(FileUtils.readFileToByteArray(instance.serializedObjectRef));
+
   }
 
   /**
@@ -295,6 +332,7 @@ public class FileSystemManager {
   public File getPdfDocument() {
 
     return instance.pdfDocument;
+
   }
 
   /**
@@ -305,6 +343,7 @@ public class FileSystemManager {
   public void addImgStrokeFile(File e) {
 
     instance.imgStrokeFiles.add(e);
+
   }
 
   /**
@@ -315,6 +354,7 @@ public class FileSystemManager {
   public void addTextStrokeFile(File e) {
 
     instance.textStrokeFiles.add(e);
+
   }
 
   /**
@@ -325,6 +365,7 @@ public class FileSystemManager {
   public File getBaseHome() {
 
     return instance.userHome;
+
   }
 
   /**
@@ -335,6 +376,7 @@ public class FileSystemManager {
   public File getPdfStrokedDoc() {
 
     return pdfStrokedDoc;
+
   }
 
   /**
@@ -345,6 +387,7 @@ public class FileSystemManager {
   public void setPdfStrokedDoc(File pdfStrokedDoc) {
 
     this.pdfStrokedDoc = pdfStrokedDoc;
+
   }
 
   /**
@@ -355,6 +398,7 @@ public class FileSystemManager {
   public String getSessionId() {
 
     return instance.sessionId;
+
   }
 
   /**
@@ -365,6 +409,7 @@ public class FileSystemManager {
   public List<File> getImageStrokeFiles() {
 
     return imgStrokeFiles;
+
   }
 
   /**
@@ -375,6 +420,7 @@ public class FileSystemManager {
   public List<File> getTextStrokeFiles() {
 
     return textStrokeFiles;
+
   }
 
   /**
@@ -385,6 +431,7 @@ public class FileSystemManager {
   public File getPdfEsignedDoc() {
 
     return pdfEsignedDoc;
+
   }
 
   /**
@@ -395,5 +442,6 @@ public class FileSystemManager {
   public File getSerializedObjectRef() {
 
     return serializedObjectRef;
+
   }
 }

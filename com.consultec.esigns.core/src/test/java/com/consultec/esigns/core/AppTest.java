@@ -22,105 +22,115 @@ import junit.framework.TestSuite;
  */
 public class AppTest extends TestCase {
 
-	/** The Constant logger. */
-	private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
+  /** The Constant logger. */
+  private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
 
-	private static final String ERROR_TESTING_MSG = "Error testing :";
+  private static final String ERROR_TESTING_MSG = "Error testing :";
 
-	/**
-	 * Create the test case.
-	 *
-	 * @param testName
-	 *            name of the test case
-	 */
-	public AppTest(String testName) {
+  /**
+   * Create the test case.
+   *
+   * @param testName name of the test case
+   */
+  public AppTest(String testName) {
 
-		super(testName);
-	}
+    super(testName);
 
-	/**
-	 * Suite.
-	 *
-	 * @return the suite of tests being tested
-	 */
-	public static Test suite() {
+  }
 
-		return new TestSuite(AppTest.class);
-	}
+  /**
+   * Suite.
+   *
+   * @return the suite of tests being tested
+   */
+  public static Test suite() {
 
-	/**
-	 * Graphics.
-	 */
-	public void graphics() {
+    return new TestSuite(AppTest.class);
 
-		final GraphicsEnvironment environment =
-			GraphicsEnvironment.getLocalGraphicsEnvironment();
-		for (GraphicsDevice device : environment.getScreenDevices()) {
-			logger.info("\t" + device.toString());
-			logger.info("\t" + device.getIDstring());
-			logger.info("\t" + device.getType());
-		}
+  }
 
-		GraphicsEnvironment ge =
-			GraphicsEnvironment.getLocalGraphicsEnvironment();
-		GraphicsDevice[] sds = ge.getScreenDevices();
-		for (GraphicsDevice sd : sds) {
-			logger.info(sd.getDisplayMode().getClass().getName());
-			logger.info(sd.getIDstring());
-			logger.info(sd.getClass().getSimpleName());
-			logger.info(
-				sd.getDefaultConfiguration().getBufferCapabilities().getFrontBufferCapabilities().getClass().getSimpleName());
-			GraphicsConfiguration gc = sd.getDefaultConfiguration();
-			logger.info(gc.getClass().getSimpleName());
-		}
-	}
+  /**
+   * Graphics.
+   */
+  public void graphics() {
 
-	/**
-	 * Test registry.
-	 */
-	public void testRegistry() {
+    final GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-		String value;
-		try {
-			value = WinRegistry.readString(
-				WinRegistry.HKEY_LOCAL_MACHINE, // HKEY
-				"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", // Key
-				"ProductName");
-			logger.info("Windows Distribution = " + value);
-		}
-		catch (IllegalArgumentException | IllegalAccessException
-						| InvocationTargetException e) {
-			logger.error(ERROR_TESTING_MSG + e.getMessage());
-		} // ValueName
+    for (GraphicsDevice device : environment.getScreenDevices()) {
 
-		Map<String, String> map;
-		try {
-			map = WinRegistry.readStringValues(
-				WinRegistry.HKEY_LOCAL_MACHINE,
-				"SYSTEM\\CurrentControlSet\\Enum\\DISPLAY");
-			for (Entry<String, String> key : map.entrySet()) {
-				logger.info(key.getKey() + " - " + key.getValue());
-			}
+      logger.info("\t" + device.toString());
+      logger.info("\t" + device.getIDstring());
+      logger.info("\t" + device.getType());
 
-		}
-		catch (IllegalArgumentException | IllegalAccessException
-						| InvocationTargetException e) {
-			logger.error(ERROR_TESTING_MSG + e.getMessage());
-		} // HKEY
+    }
 
-		try {
-			map = WinRegistry.readStringValues(
-				WinRegistry.HKEY_LOCAL_MACHINE,
-				"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
-			for (Entry<String, String> key : map.entrySet()) {
-				logger.info(key.getKey() + " - " + key.getValue());
-			}
+    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    GraphicsDevice[] sds = ge.getScreenDevices();
 
-		}
-		catch (IllegalArgumentException | IllegalAccessException
-						| InvocationTargetException e) {
-			logger.error(ERROR_TESTING_MSG + e.getMessage());
-		} // HKEY
+    for (GraphicsDevice sd : sds) {
 
-	}
+      logger.info(sd.getDisplayMode().getClass().getName());
+      logger.info(sd.getIDstring());
+      logger.info(sd.getClass().getSimpleName());
+
+      logger.info(sd.getDefaultConfiguration().getBufferCapabilities().getFrontBufferCapabilities()
+          .getClass().getSimpleName());
+
+      GraphicsConfiguration gc = sd.getDefaultConfiguration();
+
+      logger.info(gc.getClass().getSimpleName());
+
+    }
+
+  }
+
+  /**
+   * Test registry.
+   */
+  public void testRegistry() {
+
+    String value;
+
+    try {
+
+      value = WinRegistry.readString(WinRegistry.HKEY_LOCAL_MACHINE, // HKEY
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", // Key
+        "ProductName");
+
+      logger.info("Windows Distribution = " + value);
+
+    } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+      logger.error(ERROR_TESTING_MSG + e.getMessage());
+    } // ValueName
+
+    Map<String, String> map;
+
+    try {
+
+      map = WinRegistry.readStringValues(WinRegistry.HKEY_LOCAL_MACHINE,
+        "SYSTEM\\CurrentControlSet\\Enum\\DISPLAY");
+
+      for (Entry<String, String> key : map.entrySet()) {
+        logger.info(key.getKey() + " - " + key.getValue());
+      }
+
+    } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+      logger.error(ERROR_TESTING_MSG + e.getMessage());
+    } // HKEY
+
+    try {
+
+      map = WinRegistry.readStringValues(WinRegistry.HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
+
+      for (Entry<String, String> key : map.entrySet()) {
+        logger.info(key.getKey() + " - " + key.getValue());
+      }
+
+    } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+      logger.error(ERROR_TESTING_MSG + e.getMessage());
+    } // HKEY
+
+  }
+
 }

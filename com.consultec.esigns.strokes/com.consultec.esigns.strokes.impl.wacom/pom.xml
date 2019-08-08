@@ -1,144 +1,62 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.consultec.esigns</groupId>
-		<artifactId>com.consultec.esigns.strokes</artifactId>
-		<version>1.0-SNAPSHOT</version>
-	</parent>
+  <parent>
+    <groupId>com.consultec.esigns</groupId>
+    <artifactId>com.consultec.esigns.strokes</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
 
-	<groupId>com.consultec.esigns.strokes</groupId>
-	<artifactId>com.consultec.esigns.strokes.impl.wacom</artifactId>
-	<packaging>jar</packaging>
-	<url>http://maven.apache.org</url>
+  <packaging>jar</packaging>
+  <artifactId>com.consultec.esigns.strokes.impl.wacom</artifactId>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<jdk.version>1.8</jdk.version>
-	</properties>
+  <build>
+    <plugins>
 
-	<build>
-		<plugins>
+      <plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.9</version>
-				<configuration>
-					<downloadSources>true</downloadSources>
-					<downloadJavadocs>false</downloadJavadocs>
-				</configuration>
-			</plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-				<configuration>
-					<source>${jdk.version}</source>
-					<target>${jdk.version}</target>
-				</configuration>
-			</plugin>
+        <configuration>
+          <archive>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<!-- Jar file entry point -->
-							<mainClass>com.consultec.esigns.strokes.impl.WacomSignatureCaptureDiagnostic</mainClass>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>com.consultec.esigns.strokes.impl.WacomSignatureCaptureDiagnostic</mainClass>
+            </manifest>
 
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
+          </archive>
+        </configuration>
 
-			<!-- Copy project dependency -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.5.1</version>
-				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<!-- exclude junit, we need runtime dependency only -->
-							<includeScope>runtime</includeScope>
-							<outputDirectory>${project.build.directory}</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+      </plugin>
 
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>package</phase>
-						<configuration>
-							<target>
-								<echo>ANT TASK - copying files....</echo>
-								<copy todir="${icepdf.target.folder}/libs" overwrite="true"
-									flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
+    </plugins>
 
-								<copy todir="${icepdf.target.folder}/core/core-awt/libs"
-									overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
+  </build>
 
-								<copy
-									todir="${icepdf.target.folder}/viewer/viewer-awt/libs"
-									overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+  <dependencies>
 
-		</plugins>
+    <dependency>
+      <groupId>com.consultec.esigns</groupId>
+      <artifactId>com.consultec.esigns.strokes.api</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
 
-	</build>
+    <dependency>
+      <groupId>com.florentis</groupId>
+      <artifactId>flsx</artifactId>
+      <version>1.0</version>
+    </dependency>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.consultec.esigns.strokes</groupId>
-			<artifactId>com.consultec.esigns.strokes.api</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.florentis</groupId>
-			<artifactId>flsx</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.florentis.licence</groupId>
-			<artifactId>wgssLicenceJNI</artifactId>
-			<version>1.0</version>
-		</dependency>
-	</dependencies>
+    <dependency>
+      <groupId>com.florentis.licence</groupId>
+      <artifactId>wgssLicenceJNI</artifactId>
+      <version>1.0</version>
+    </dependency>
+
+  </dependencies>
+
 </project>

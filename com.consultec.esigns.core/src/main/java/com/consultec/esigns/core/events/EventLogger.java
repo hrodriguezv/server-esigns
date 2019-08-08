@@ -8,181 +8,197 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.RuntimeErrorException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.consultec.esigns.core.util.SystemCommandExecutor;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * The Class EventLogger.
  */
+@Slf4j
 public class EventLogger {
 
-	/** The Constant logger. */
-	private static final Logger logger =
-		LoggerFactory.getLogger(EventLogger.class);
+  /** The instance. */
+  private static EventLogger instance;
 
-	/** The instance. */
-	private static EventLogger instance;
+  /** The mutex. */
+  private static Object mutex = new Object();
 
-	/** The mutex. */
-	private static Object mutex = new Object();
+  /** The id. */
+  private AtomicInteger id;
 
-	/** The id. */
-	private AtomicInteger id;
+  /** The Constant appName. */
+  private static final String APP_NAME = "\"Consultec Listener\"";
 
-	/** The Constant appName. */
-	private static final String APP_NAME = "\"Consultec Listener\"";
+  /**
+   * The Enum Operation.
+   */
+  private enum Operation {
 
-	/**
-	 * The Enum Operation.
-	 */
-	private enum Operation {
+    /** The information. */
+    INFORMATION,
+    /** The error. */
+    ERROR,
+    /** The warning. */
+    WARNING;
 
-			/** The information. */
-			INFORMATION,
-			/** The error. */
-			ERROR,
-			/** The warning. */
-			WARNING;
-	}
+  }
 
-	/**
-	 * The Enum Origin.
-	 */
-	private enum Origin {
+  /**
+   * The Enum Origin.
+   */
+  private enum Origin {
 
-			/** The application. */
-			APPLICATION,
-			/** The system. */
-			SYSTEM,
-			/** The security. */
-			SECURITY,
-			/** The installation. */
-			INSTALLATION;
-	}
+    /** The application. */
+    APPLICATION,
+    /** The system. */
+    SYSTEM,
+    /** The security. */
+    SECURITY,
+    /** The installation. */
+    INSTALLATION;
 
-	/**
-	 * Instantiates a new Event Logger.
-	 */
-	private EventLogger() {
+  }
 
-	}
+  /**
+   * Instantiates a new Event Logger.
+   */
+  private EventLogger() {
 
-	/**
-	 * Gets the next id.
-	 *
-	 * @return the next id
-	 */
-	private Integer getNextId() {
+  }
 
-		synchronized (mutex) {
-			instance.id.incrementAndGet();
-		}
-		return instance.id.get();
-	}
+  /**
+   * Gets the next id.
+   *
+   * @return the next id
+   */
+  private Integer getNextId() {
 
-	/**
-	 * Execute command.
-	 *
-	 * @param op
-	 *            the op
-	 * @param or
-	 *            the or
-	 * @param msg
-	 *            the msg
-	 */
-	private static void executeCommand(Operation op, Origin or, String msg) {
+    synchronized (mutex) {
+      instance.id.incrementAndGet();
+    }
 
-		try {
-			String[] cmd = {
-				"cmd", "/c", "EventCreate", "/t", op.name(), "/id",
-				instance.getNextId().toString(), "/l", or.name(), "/so",
-				APP_NAME, "/d", " \"" + msg + "\""
-			};
+    return instance.id.get();
 
-			SystemCommandExecutor commandExecutor =
-				new SystemCommandExecutor(Arrays.asList(cmd));
-			int exitValue = commandExecutor.executeCommand();
-			logger.info("Process exited with value %d %n", exitValue);
-		}
-		catch (IOException e) {
-			logger.error(
-				"Error intentando enviar traza al stack de eventos de Windows" +
-					e.getMessage());
-		}
-		catch (InterruptedException e) {
-			logger.error(
-				"Error intentando enviar traza al stack de eventos de Windows" +
-					e.getMessage());
-			Thread.currentThread().interrupt();
-		}
-	}
+  }
 
-	/**
-	 * Gets the single instance of Event Logger.
-	 *
-	 * @return single instance of Event Logger
-	 */
-	public static EventLogger getInstance() {
+  /**
+   * Execute command.
+   *
+   * @param op the op
+   * @param or the or
+   * @param msg the msg
+   */
+  private static void executeCommand(Operation op, Origin or, String msg) {
 
-		EventLogger result = instance;
+    try {
 
-		if (result == null) {
-			synchronized (mutex) {
-				result = instance;
-				if (result == null) {
-					instance = result = new EventLogger();
-				}
-			}
-		}
+      String[] cmd = {
+          "cmd",
+          "/c",
+          "EventCreate",
+          "/t",
+          op.name(),
+          "/id",
+          instance.getNextId().toString(),
+          "/l",
+          or.name(),
+          "/so",
+          APP_NAME,
+          "/d",
+          " \"" + msg + "\""};
 
-		return result;
-	}
+      SystemCommandExecutor commandExecutor = new SystemCommandExecutor(Arrays.asList(cmd));
 
-	/**
-	 * Inits the.
-	 */
-	public void init() {
+      int exitValue = commandExecutor.executeCommand();
 
-		String osName =
-			System.getProperty("os.name").toUpperCase(Locale.ENGLISH);
-		if (!osName.startsWith("WINDOWS")) {
-			throw new RuntimeErrorException(null, "Not Windows");
-		}
-		instance.id = new AtomicInteger(1);
-	}
+      log.info("Process exited with value {}", exitValue);
 
-	/**
-	 * Error.
-	 *
-	 * @param msg
-	 *            the msg
-	 */
-	public void error(String msg) {
+    } catch (IOException e) {
 
-		executeCommand(Operation.ERROR, Origin.APPLICATION, msg);
-	}
+      log.error("Error intentando enviar traza al stack de eventos de Windows", e);
 
-	/**
-	 * Info.
-	 *
-	 * @param msg
-	 *            the msg
-	 */
-	public void info(String msg) {
+    } catch (InterruptedException e) {
 
-		executeCommand(Operation.INFORMATION, Origin.APPLICATION, msg);
-	}
+      log.error("Error intentando enviar traza al stack de eventos de Windows", e);
 
-	/**
-	 * Warn.
-	 *
-	 * @param msg
-	 *            the msg
-	 */
-	public void warn(String msg) {
+      Thread.currentThread().interrupt();
 
-		executeCommand(Operation.WARNING, Origin.APPLICATION, msg);
-	}
+    }
+  }
+
+  /**
+   * Gets the single instance of Event Logger.
+   *
+   * @return single instance of Event Logger
+   */
+  public static EventLogger getInstance() {
+
+    EventLogger result = instance;
+
+    if (result == null) {
+
+      synchronized (mutex) {
+
+        result = instance;
+
+        if (result == null) {
+          instance = result = new EventLogger();
+        }
+
+      }
+
+    }
+
+    return result;
+
+  }
+
+  /**
+   * Inits the.
+   */
+  public void init() {
+
+    String osName = System.getProperty("os.name").toUpperCase(Locale.ENGLISH);
+
+    if (!osName.startsWith("WINDOWS")) {
+      throw new RuntimeErrorException(null, "Not Windows");
+    }
+
+    instance.id = new AtomicInteger(1);
+
+  }
+
+  /**
+   * Error.
+   *
+   * @param msg the msg
+   */
+  public void error(String msg) {
+
+    executeCommand(Operation.ERROR, Origin.APPLICATION, msg);
+
+  }
+
+  /**
+   * Info.
+   *
+   * @param msg the msg
+   */
+  public void info(String msg) {
+
+    executeCommand(Operation.INFORMATION, Origin.APPLICATION, msg);
+
+  }
+
+  /**
+   * Warn.
+   *
+   * @param msg the msg
+   */
+  public void warn(String msg) {
+
+    executeCommand(Operation.WARNING, Origin.APPLICATION, msg);
+
+  }
 }

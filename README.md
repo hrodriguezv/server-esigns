@@ -2,7 +2,7 @@
 
 ### Pre-requisitos: Software requerido para el funcionamiento del tablet
 - DisplayLink.exe ->[here](https://www.displaylink.com/downloads/windows)</br>
-- Wacom-Signature-SDK-x86-4.0.1.msi -> [escoger versión que corresponda a la arq. de la maquina 32 o 64 bits](https://developer-docs.wacom.com/display/DevDocs/Download+the+SDK+and+useful+tools)</br>
+- Wacom-Signature-SDK-x86-4.0.1.msi -> [escoger versiÃ³n que corresponda a la arq. de la maquina 32 o 64 bits](https://developer-docs.wacom.com/display/DevDocs/Download+the+SDK+and+useful+tools)</br>
 - WacomTablet_6.3.35-2.exe -> [here](https://www.wacom.com/es-es/support/product-support/drivers)</br></br>
 
 # 
@@ -24,7 +24,7 @@ Es necesario instalar en el .m2 local, los binarios con el API de Wacom para la 
 
 # 
 
-# PUNTO DE DECISIÓN - Caso JCAPI - En el caso de resolver el problema con Pheox, se deben seguir los siguientes pasos para poder utilizarla en el proyecto.
+# PUNTO DE DECISIÃ“N - Caso JCAPI - En el caso de resolver el problema con Pheox, se deben seguir los siguientes pasos para poder utilizarla en el proyecto.
 
 Descargar el instalador con la libreria 
 - JCAPI ->[here](pheox.com/download)</br>
@@ -44,11 +44,11 @@ security.provider.9=sun.security.smartcardio.SunPCSC </br>
 security.provider.10=sun.security.mscapi.SunMSCAPI </br>
 **security.provider.11=com.pheox.jcapi.JCAPIProvider** </br>
 
-Para que la JVM consiga el proveedor en el classpath de la maquina, se debe copiar la librería al directorio "%JAVA_HOME%\jre\lib\ext\".
+Para que la JVM consiga el proveedor en el classpath de la maquina, se debe copiar la librerÃ­a al directorio "%JAVA_HOME%\jre\lib\ext\".
 Ejemplo: </br>
 copy JCAPI.jar "%JAVA_HOME%\jre\lib\ext\"
 
-Se debe instalar la libreria JCAPI en el .m2 local para que pueda compilar el código fuente
+Se debe instalar la libreria JCAPI en el .m2 local para que pueda compilar el cÃ³digo fuente
 - mvn install:install-file -Dfile=JCAPI-2.2.0.jar -DgroupId=com.pheox.jcapi -DartifactId=jcapi -Dversion=2.2.0 -Dpackaging=jar
 
 >`'En el supuesto de que no se vaya a utilizar este proveedor, se deben remover referencias en los pom.xml y en las clases *com.consultec.esigns.listener.ServerApp* del proyecto Listener, asi como en el pom.xml y la clase *com.consultec.esigns.core.security.KeyStoreAccessMode* del proyecto core.`'

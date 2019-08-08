@@ -9,11 +9,12 @@ package com.consultec.esigns.core.queue;
  * @author hrodriguez
  */
 public interface HandlerQueue {
-	
-	/**
-	 * Handle queue.
-	 *
-	 * @param raw the raw
-	 */
-	public void handleQueue(byte[] raw);
+
+  /**
+   * Handle queue.
+   *
+   * @param raw the raw
+   */
+  public void handleQueue(byte[] raw);
+
 }

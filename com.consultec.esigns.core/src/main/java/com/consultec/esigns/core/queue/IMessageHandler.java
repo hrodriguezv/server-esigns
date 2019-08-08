@@ -9,11 +9,12 @@ package com.consultec.esigns.core.queue;
  * @author hrodriguez
  */
 public interface IMessageHandler {
-	
-	/**
-	 * Process msg.
-	 *
-	 * @param msg the msg
-	 */
-	public void processMsg(String msg);
+
+  /**
+   * Process msg.
+   *
+   * @param msg the msg
+   */
+  public void processMsg(String msg);
+
 }

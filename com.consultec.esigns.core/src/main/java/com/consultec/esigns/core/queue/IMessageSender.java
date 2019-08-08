@@ -20,4 +20,5 @@ public interface IMessageSender {
    * @param message the message
    */
   void sendMessage(String message) throws JMSException, ConnectException;
+
 }

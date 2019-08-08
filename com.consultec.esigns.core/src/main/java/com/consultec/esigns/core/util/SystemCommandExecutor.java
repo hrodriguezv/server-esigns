@@ -13,112 +13,110 @@ import java.util.Optional;
  */
 public class SystemCommandExecutor {
 
-	/** The command information. */
-	private List<String> commandInformation;
+  /** The command information. */
+  private List<String> commandInformation;
 
-	/** The admin password. */
-	private String adminPassword;
+  /** The admin password. */
+  private String adminPassword;
 
-	/** The input stream handler. */
-	private ThreadedStreamHandler inputStreamHandler;
+  /** The input stream handler. */
+  private ThreadedStreamHandler inputStreamHandler;
 
-	/** The error stream handler. */
-	private ThreadedStreamHandler errorStreamHandler;
+  /** The error stream handler. */
+  private ThreadedStreamHandler errorStreamHandler;
 
-	/** The directory. */
-	private Optional<String> directory;
+  /** The directory. */
+  private Optional<String> directory;
 
-	/**
-	 * Pass in the system command you want to run as a List of Strings.
-	 *
-	 * @param commandInformation
-	 *            The command you want to run.
-	 */
-	public SystemCommandExecutor(final List<String> commandInformation) {
+  /**
+   * Pass in the system command you want to run as a List of Strings.
+   *
+   * @param commandInformation The command you want to run.
+   */
+  public SystemCommandExecutor(final List<String> commandInformation) {
 
-		if (commandInformation == null)
-			throw new NullPointerException(
-				"The commandInformation is required.");
-		this.commandInformation = commandInformation;
-		this.adminPassword = null;
-		this.directory = Optional.ofNullable(null);
-	}
+    if (commandInformation == null) {
+      throw new NullPointerException("The commandInformation is required.");
+    }
 
-	/**
-	 * Instantiates a new system command executor.
-	 *
-	 * @param commandInformation
-	 *            the command information
-	 * @param dir
-	 *            the dir
-	 */
-	public SystemCommandExecutor(
-		final List<String> commandInformation, Optional<String> dir) {
+    this.commandInformation = commandInformation;
+    this.adminPassword = null;
+    this.directory = Optional.ofNullable(null);
 
-		this(commandInformation);
-		this.directory = dir;
-	}
+  }
 
-	/**
-	 * Execute command.
-	 *
-	 * @return the int
-	 * @throws IOException
-	 *             Signals that an I/O exception has occurred.
-	 * @throws InterruptedException
-	 *             the interrupted exception
-	 */
-	public int executeCommand()
-		throws IOException, InterruptedException {
+  /**
+   * Instantiates a new system command executor.
+   *
+   * @param commandInformation the command information
+   * @param dir the dir
+   */
+  public SystemCommandExecutor(final List<String> commandInformation, Optional<String> dir) {
 
-		ProcessBuilder pb = new ProcessBuilder(commandInformation);
+    this(commandInformation);
+    this.directory = dir;
 
-		if (this.directory.isPresent()) {
-			pb.directory(new File(directory.get()));
-		}
+  }
 
-		Process process = pb.start();
+  /**
+   * Execute command.
+   *
+   * @return the int
+   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws InterruptedException the interrupted exception
+   */
+  public int executeCommand() throws IOException, InterruptedException {
 
-		OutputStream stdOutput = process.getOutputStream();
+    ProcessBuilder pb = new ProcessBuilder(commandInformation);
 
-		InputStream inputStream = process.getInputStream();
-		InputStream errorStream = process.getErrorStream();
+    if (this.directory.isPresent()) {
+      pb.directory(new File(directory.get()));
+    }
 
-		inputStreamHandler =
-			new ThreadedStreamHandler(inputStream, stdOutput, adminPassword);
-		errorStreamHandler = new ThreadedStreamHandler(errorStream);
+    Process process = pb.start();
 
-		inputStreamHandler.start();
-		errorStreamHandler.start();
+    OutputStream stdOutput = process.getOutputStream();
 
-		int exitValue = process.waitFor();
+    InputStream inputStream = process.getInputStream();
+    InputStream errorStream = process.getErrorStream();
 
-		inputStreamHandler.interrupt();
-		errorStreamHandler.interrupt();
-		inputStreamHandler.join();
-		errorStreamHandler.join();
+    inputStreamHandler = new ThreadedStreamHandler(inputStream, stdOutput, adminPassword);
+    errorStreamHandler = new ThreadedStreamHandler(errorStream);
 
-		return exitValue;
-	}
+    inputStreamHandler.start();
+    errorStreamHandler.start();
 
-	/**
-	 * Get the standard output (stdout) from the command you just exec'd.
-	 *
-	 * @return the standard output from command
-	 */
-	public StringBuilder getStandardOutputFromCommand() {
+    int exitValue = process.waitFor();
 
-		return inputStreamHandler.getOutputBuffer();
-	}
+    inputStreamHandler.interrupt();
+    errorStreamHandler.interrupt();
+    inputStreamHandler.join();
+    errorStreamHandler.join();
 
-	/**
-	 * Get the standard error (stderr) from the command you just exec'd.
-	 *
-	 * @return the standard error from command
-	 */
-	public StringBuilder getStandardErrorFromCommand() {
+    return exitValue;
 
-		return errorStreamHandler.getOutputBuffer();
-	}
+  }
+
+  /**
+   * Get the standard output (stdout) from the command you just exec'd.
+   *
+   * @return the standard output from command
+   */
+  public StringBuilder getStandardOutputFromCommand() {
+
+    return inputStreamHandler.getOutputBuffer();
+
+  }
+
+  /**
+   * Get the standard error (stderr) from the command you just exec'd.
+   *
+   * @return the standard error from command
+   */
+  public StringBuilder getStandardErrorFromCommand() {
+
+    return errorStreamHandler.getOutputBuffer();
+
+  }
 
 }

@@ -17,90 +17,87 @@ import sun.security.mscapi.SunMSCAPI;
 @SuppressWarnings("restriction")
 public enum KeyStoreAccessMode {
 
-		/** The local machine. */
-		LOCAL_MACHINE(JCAPIProvider.class, new BouncyCastleDigest(), "msks"),
+  /** The local machine. */
+  LOCAL_MACHINE(JCAPIProvider.class, new BouncyCastleDigest(), "msks"),
 
-		/** The windows my. */
-		WINDOWS_MY(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-MY"),
+  /** The windows my. */
+  WINDOWS_MY(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-MY"),
 
-		/** The windows root. */
-		WINDOWS_ROOT(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-ROOT"),
+  /** The windows root. */
+  WINDOWS_ROOT(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-ROOT"),
 
-		/** The file system. */
-		FILE_SYSTEM(BouncyCastleProvider.class, new BouncyCastleDigest(),
-			"pkcs12");
+  /** The file system. */
+  FILE_SYSTEM(BouncyCastleProvider.class, new BouncyCastleDigest(), "pkcs12"),
 
-	/** The provider. */
-	private Class<?> provider;
+  /** None */
+  NONE(SunMSCAPI.class, new BouncyCastleDigest(), "none");
 
-	/** The digest provider. */
-	private IExternalDigest digestProvider;
+  /** The provider. */
+  private Class<?> provider;
 
-	/** The type. */
-	private String type;
+  /** The digest provider. */
+  private IExternalDigest digestProvider;
 
-	/**
-	 * Instantiates a new key store access mode.
-	 *
-	 * @param p
-	 *            the p
-	 * @param ix
-	 *            the ix
-	 * @param t
-	 *            the t
-	 */
-	private KeyStoreAccessMode(
-		Class<?> p, IExternalDigest ix, String t) {
+  /** The type. */
+  private String type;
 
-		this.provider = p;
-		this.digestProvider = ix;
-		this.type = t;
-	}
+  /**
+   * Instantiates a new key store access mode.
+   *
+   * @param p the p
+   * @param ix the ix
+   * @param t the t
+   */
+  private KeyStoreAccessMode(Class<?> p, IExternalDigest ix, String t) {
 
-	/**
-	 * Gets the provider.
-	 *
-	 * @return the provider
-	 */
-	public Class<?> getProvider() {
+    this.provider = p;
+    this.digestProvider = ix;
+    this.type = t;
+  }
 
-		return provider;
-	}
+  /**
+   * Gets the provider.
+   *
+   * @return the provider
+   */
+  public Class<?> getProvider() {
 
-	/**
-	 * Gets the type.
-	 *
-	 * @return the type
-	 */
-	public String getType() {
+    return provider;
+  }
 
-		return type;
-	}
+  /**
+   * Gets the type.
+   *
+   * @return the type
+   */
+  public String getType() {
 
-	/**
-	 * Gets the digest provider.
-	 *
-	 * @return the digest provider
-	 */
-	public IExternalDigest getDigestProvider() {
+    return type;
+  }
 
-		return digestProvider;
-	}
+  /**
+   * Gets the digest provider.
+   *
+   * @return the digest provider
+   */
+  public IExternalDigest getDigestProvider() {
 
-	/**
-	 * From string.
-	 *
-	 * @param text
-	 *            the text
-	 * @return the key store access mode
-	 */
-	public static KeyStoreAccessMode fromString(String text) {
+    return digestProvider;
+  }
 
-		for (KeyStoreAccessMode b : KeyStoreAccessMode.values()) {
-			if (b.type.equalsIgnoreCase(text)) {
-				return b;
-			}
-		}
-		return null;
-	}
+  /**
+   * From string.
+   *
+   * @param text the text
+   * @return the key store access mode
+   */
+  public static KeyStoreAccessMode fromString(String text) {
+
+    for (KeyStoreAccessMode b : KeyStoreAccessMode.values()) {
+      if (b.type.equalsIgnoreCase(text)) {
+        return b;
+      }
+    }
+    return null;
+  }
 }
