@@ -168,6 +168,7 @@ public class MessageHandler implements IMessageHandler {
           // path = pobj.getOrigin() + "/o/api/account-opening/update-document-stage";
           break;
 
+        case CANCELLED:
         case E_SIGNED:
 
           ObjectMapper objectMapper = new ObjectMapper();
