@@ -105,7 +105,7 @@ public class MessageHandler implements IMessageHandler {
 
           if (!KeyStoreAccessMode.NONE.equals(helper.getMode())) {
 
-            String alias = helper.getAlias();
+            String alias = helper.getConfiguredAlias();
 
             log.info("Getting certificates from Keystore under alias: [{}]", alias);
 

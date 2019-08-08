@@ -51,49 +51,31 @@ public class ServerApp {
 
     Optional<String> p12 = Optional.ofNullable(null);
 
-    try {
+    if (KeyStoreAccessMode.LOCAL_MACHINE.equals(KEYSTORE_ACCESS_CONFIGURED)) {
 
-      if (KeyStoreAccessMode.LOCAL_MACHINE.equals(KEYSTORE_ACCESS_CONFIGURED)) {
+      JCAPISystemStoreRegistryLocation location = new JCAPISystemStoreRegistryLocation(
+          JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
 
-        JCAPISystemStoreRegistryLocation location = new JCAPISystemStoreRegistryLocation(
-            JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
+      JCAPIProperties.getInstance().setSystemStoreRegistryLocation(location);
 
-        JCAPIProperties.getInstance().setSystemStoreRegistryLocation(location);
+    } else if (KeyStoreAccessMode.FILE_SYSTEM.equals(KEYSTORE_ACCESS_CONFIGURED)) {
 
-      } else if (KeyStoreAccessMode.FILE_SYSTEM.equals(KEYSTORE_ACCESS_CONFIGURED)) {
+      p12 = Optional.ofNullable(PropertiesManager.getInstance()
+          .getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
 
-        p12 = Optional.ofNullable(PropertiesManager.getInstance()
-            .getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
-
-        pwd = PropertiesManager.getInstance().getValue(PropertiesManager.KEY_OPERATOR_CERTIFICATE)
-            .toCharArray();
-
-      }
-
-    } catch (Exception e) {
-
-      log.error("Starup error", e);
-
-    } finally {
-
-      if (KEYSTORE_ACCESS_CONFIGURED.equals(KeyStoreAccessMode.NONE)) {
-
-        SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED);
-
-      } else {
-
-        SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED, p12, pwd);
-
-      }
-
-      EventLogger.getInstance().init();
-
-      EventLogger.getInstance()
-          .info("Se ha iniciado correctamente el Servicio de registro de firmas electronicas");
-
-      log.info("ServerApp listener started ...");
+      pwd = PropertiesManager.getInstance().getValue(PropertiesManager.KEY_OPERATOR_CERTIFICATE)
+          .toCharArray();
 
     }
+
+    SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED, p12, pwd);
+
+    EventLogger.getInstance().init();
+
+    EventLogger.getInstance()
+        .info("Se ha iniciado correctamente el Servicio de registro de firmas electronicas");
+
+    log.info("ServerApp listener started ...");
 
   }
 

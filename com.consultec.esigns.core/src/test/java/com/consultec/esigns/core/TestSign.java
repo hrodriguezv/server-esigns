@@ -56,7 +56,7 @@ public class TestSign {
 
     helper.init(mode, nill, null);
 
-    String alias = helper.getAlias();
+    String alias = helper.getConfiguredAlias();
     signChain = helper.getCertificateChainByAlias(alias);
 
     ITSAClient tsaClient = new TSAClientBouncyCastle(urlTSA);
