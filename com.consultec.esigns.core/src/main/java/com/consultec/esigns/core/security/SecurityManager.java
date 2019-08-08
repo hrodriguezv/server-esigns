@@ -2,6 +2,7 @@
 package com.consultec.esigns.core.security;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -152,7 +153,7 @@ public class SecurityManager {
    *
    * @return the alias
    */
-  public String getAlias() {
+  public String getConfiguredAlias() {
 
     switch (mode) {
       case FILE_SYSTEM:
@@ -250,6 +251,7 @@ public class SecurityManager {
     try {
 
       setUp(mode, p12file, pwd);
+      return;
 
     } catch (java.lang.Error e) {
 
@@ -260,12 +262,12 @@ public class SecurityManager {
 
     if (safe) {
 
-      while (getAlias() == null
+      while (getConfiguredAlias() == null
           && (instance.mode.ordinal() < KeyStoreAccessMode.values().length - 1)) {
         setUp(KeyStoreAccessMode.values()[instance.mode.ordinal() + 1], p12file, pwd);
       }
 
-      if (getAlias() == null) {
+      if (getConfiguredAlias() == null) {
 
         throw new IllegalStateException(
             "Can't find the correct settings to load security configuration");
@@ -274,6 +276,50 @@ public class SecurityManager {
     }
 
   }
+
+  /**
+   * Allows to get the default aliases for the configured keystore.
+   *
+   * @return Enumeration that contains all alias found in the configured keystore
+   * @throws KeyStoreException
+   */
+  private Enumeration<String> getKeystoreAliases() throws KeyStoreException {
+    return (keyStore != null) ? keyStore.aliases() : Collections.emptyEnumeration();
+  }
+
+  /**
+   * Loads into memory the keystore configured.
+   *
+   * @param pathFile path to find the keystore in file system
+   * @param pwd password to open the configured keystore
+   * @throws NoSuchAlgorithmException
+   * @throws CertificateException
+   * @throws FileNotFoundException
+   * @throws IOException
+   */
+  private void loadKeystore(Optional<String> pathFile, char[] pwd)
+      throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
+
+    switch (instance.mode) {
+
+      case FILE_SYSTEM:
+        if (pathFile.isPresent()) {
+
+          keyStore.load(new FileInputStream(pathFile.get()), pwd);
+
+        }
+        break;
+      case WINDOWS_MY:
+      case WINDOWS_ROOT:
+      case LOCAL_MACHINE:
+        keyStore.load(null, pwd);
+        break;
+      default:
+        break;
+    }
+
+  }
+
 
   /**
    * Set up all required references to get a valid state of this singleton.
@@ -309,15 +355,7 @@ public class SecurityManager {
 
     try {
 
-      if (p12file.isPresent()) {
-
-        keyStore.load(new FileInputStream(p12file.get()), pwd);
-
-      } else {
-
-        keyStore.load(null, pwd);
-
-      }
+      loadKeystore(p12file, pwd);
 
     } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
 
@@ -328,7 +366,7 @@ public class SecurityManager {
     try {
 
       keys = new HashMap<>();
-      Enumeration<String> aliases = keyStore.aliases();
+      Enumeration<String> aliases = getKeystoreAliases();
       while (aliases.hasMoreElements()) {
         String element = aliases.nextElement();
         keys.put(element, keyStore.getKey(element, pwd));
@@ -343,7 +381,7 @@ public class SecurityManager {
     try {
 
       trustedChains = new HashMap<>();
-      Enumeration<String> aliases = keyStore.aliases();
+      Enumeration<String> aliases = getKeystoreAliases();
       while (aliases.hasMoreElements()) {
         String element = aliases.nextElement();
         trustedChains.put(element, (Certificate[]) keyStore.getCertificateChain(element));
@@ -358,7 +396,7 @@ public class SecurityManager {
     try {
 
       certificates = new HashMap<>();
-      Enumeration<String> aliases = keyStore.aliases();
+      Enumeration<String> aliases = getKeystoreAliases();
       while (aliases.hasMoreElements()) {
         String element = aliases.nextElement();
         certificates.put(element, (X509Certificate) keyStore.getCertificate(element));
