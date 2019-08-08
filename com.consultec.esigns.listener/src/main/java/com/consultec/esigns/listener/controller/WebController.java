@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/files") // RequestMapping for Class
+@RequestMapping("/files")
 public class WebController {
 
   /**
@@ -60,6 +60,7 @@ public class WebController {
    * @param pobj
    */
   private void handleFileUpload(PayloadTO pobj) {
+
     String sessionId;
 
     try {
