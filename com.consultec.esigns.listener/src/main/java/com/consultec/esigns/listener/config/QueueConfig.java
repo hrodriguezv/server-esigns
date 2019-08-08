@@ -24,55 +24,65 @@ import com.consultec.esigns.listener.queue.MessageSender;
 @EnableJms
 public class QueueConfig implements IQueueConfig {
 
-	/** The Constant QUEUE_NAME. */
-	public static final String QUEUE_NAME =
-		PropertiesManager.getInstance().getValue(
-			PropertiesManager.QUEUE_SERVER_NAME);
+  /**
+   * The Constant QUEUE_NAME.
+   */
+  public static final String QUEUE_NAME =
+      PropertiesManager.getInstance().getValue(PropertiesManager.QUEUE_SERVER_NAME);
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.consultec.esigns.core.queue.IQueueConfig#connectionFactory()
-	 */
-	@Bean
-	public ConnectionFactory connectionFactory() {
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.core.queue.IQueueConfig#connectionFactory()
+   */
+  @Bean
+  public ConnectionFactory connectionFactory() {
 
-		PropertiesManager pref = PropertiesManager.getInstance();
-		return new ActiveMQConnectionFactory(
-			pref.getValue(PropertiesManager.QUEUE_SERVER_HOST) + ":" +
-				pref.getValue(PropertiesManager.QUEUE_SERVER_PORT));
-	}
+    PropertiesManager pref = PropertiesManager.getInstance();
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.consultec.esigns.core.queue.IQueueConfig#jmsListenerContainerFactory(
-	 * )
-	 */
-	@SuppressWarnings("rawtypes")
-	@Bean
-	public JmsListenerContainerFactory jmsListenerContainerFactory() {
+    return new ActiveMQConnectionFactory(pref.getValue(PropertiesManager.QUEUE_SERVER_HOST) + ":"
+        + pref.getValue(PropertiesManager.QUEUE_SERVER_PORT));
 
-		DefaultJmsListenerContainerFactory factory =
-			new DefaultJmsListenerContainerFactory();
-		factory.setConnectionFactory(connectionFactory());
-		// core poll size=4 threads and max poll size 8 threads
-		factory.setConcurrency("4-8");
-		return factory;
-	}
+  }
 
-	/**
-	 * Send message MQ.
-	 *
-	 * @param msg
-	 *            the msg
-	 */
-	public void sendMessageMQ(String msg) {
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.core.queue.IQueueConfig#jmsListenerContainerFactory( )
+   */
+  @Bean
+  @SuppressWarnings("rawtypes")
+  public JmsListenerContainerFactory jmsListenerContainerFactory() {
 
-		@SuppressWarnings("resource")
-		AnnotationConfigApplicationContext context =
-			new AnnotationConfigApplicationContext(QueueConfig.class);
-		context.register(MessageSender.class);
-		MessageSender ms = context.getBean(MessageSender.class);
-		ms.sendMessage(msg);
-	}
+    DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+
+    factory.setConnectionFactory(connectionFactory());
+
+    // core poll size=4 threads and max poll size 8 threads
+
+    factory.setConcurrency("4-8");
+
+    return factory;
+
+  }
+
+  /**
+   * Send message MQ.
+   *
+   * @param msg the msg
+   */
+  public void sendMessageMQ(String msg) {
+
+    @SuppressWarnings("resource")
+    AnnotationConfigApplicationContext context =
+        new AnnotationConfigApplicationContext(QueueConfig.class);
+
+    context.register(MessageSender.class);
+
+    MessageSender ms = context.getBean(MessageSender.class);
+
+    ms.sendMessage(msg);
+
+  }
+
 }

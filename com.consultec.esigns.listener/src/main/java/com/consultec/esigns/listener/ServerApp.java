@@ -9,8 +9,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.activemq.broker.BrokerService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,19 +23,21 @@ import com.consultec.esigns.listener.storage.StorageProperties;
 import com.pheox.jcapi.JCAPIProperties;
 import com.pheox.jcapi.JCAPISystemStoreRegistryLocation;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * The Class ServerApp.
  */
+@Slf4j
 @SpringBootApplication
 @EnableConfigurationProperties(StorageProperties.class)
 public class ServerApp {
-
-  private static final Logger logger = LoggerFactory.getLogger(ServerApp.class);
 
   /**
    * The main method.
    *
    * @param args the arguments
+   * 
    * @throws IOException Signals that an I/O exception has occurred.
    * @throws TimeoutException the timeout exception
    * @throws NoSuchAlgorithmException
@@ -45,27 +45,56 @@ public class ServerApp {
   public static void main(String[] args)
       throws IOException, TimeoutException, NoSuchAlgorithmException {
 
-    SpringApplication.run(ServerApp.class, new String[] {});
+    SpringApplication.run(ServerApp.class, args);
 
     char[] pwd = null;
+
     Optional<String> p12 = Optional.ofNullable(null);
-    
-    if (KEYSTORE_ACCESS_CONFIGURED.equals(KeyStoreAccessMode.LOCAL_MACHINE)) {
-      JCAPISystemStoreRegistryLocation location = new JCAPISystemStoreRegistryLocation(
-          JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
-      JCAPIProperties.getInstance().setSystemStoreRegistryLocation(location);
-    } else if (KEYSTORE_ACCESS_CONFIGURED.equals(KeyStoreAccessMode.FILE_SYSTEM)) {
-      p12 = Optional.ofNullable(PropertiesManager.getInstance()
-          .getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
-      pwd = PropertiesManager.getInstance().getValue(PropertiesManager.KEY_OPERATOR_CERTIFICATE)
-          .toCharArray();
+
+    try {
+
+      if (KeyStoreAccessMode.LOCAL_MACHINE.equals(KEYSTORE_ACCESS_CONFIGURED)) {
+
+        JCAPISystemStoreRegistryLocation location = new JCAPISystemStoreRegistryLocation(
+            JCAPISystemStoreRegistryLocation.CERT_SYSTEM_STORE_LOCAL_MACHINE);
+
+        JCAPIProperties.getInstance().setSystemStoreRegistryLocation(location);
+
+      } else if (KeyStoreAccessMode.FILE_SYSTEM.equals(KEYSTORE_ACCESS_CONFIGURED)) {
+
+        p12 = Optional.ofNullable(PropertiesManager.getInstance()
+            .getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
+
+        pwd = PropertiesManager.getInstance().getValue(PropertiesManager.KEY_OPERATOR_CERTIFICATE)
+            .toCharArray();
+
+      }
+
+    } catch (Exception e) {
+
+      log.error("Starup error", e);
+
+    } finally {
+
+      if (KEYSTORE_ACCESS_CONFIGURED.equals(KeyStoreAccessMode.NONE)) {
+
+        SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED);
+
+      } else {
+
+        SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED, p12, pwd);
+
+      }
+
+      EventLogger.getInstance().init();
+
+      EventLogger.getInstance()
+          .info("Se ha iniciado correctamente el Servicio de registro de firmas electronicas");
+
+      log.info("ServerApp listener started ...");
+
     }
 
-    SecurityManager.getInstance().safeInit(KEYSTORE_ACCESS_CONFIGURED, p12, pwd);
-    EventLogger.getInstance().init();
-    EventLogger.getInstance()
-        .info("Se ha iniciado correctamente el Servicio de registro de firmas electronicas");
-    logger.info("ServerApp listener started ...");
   }
 
   /**
@@ -79,14 +108,23 @@ public class ServerApp {
   public BrokerService broker() throws GeneralErrorListenerException {
 
     try {
+
       PropertiesManager props = PropertiesManager.getInstance();
       BrokerService broker = new BrokerService();
+
       broker.addConnector(props.getValue(PropertiesManager.QUEUE_SERVER_HOST) + ":"
           + props.getValue(PropertiesManager.QUEUE_SERVER_PORT));
-      logger.info("Starting broker Service at port :" + PropertiesManager.QUEUE_SERVER_PORT);
+
+      log.info("Starting broker Service at port : {}", PropertiesManager.QUEUE_SERVER_PORT);
+
       return broker;
+
     } catch (Exception e) {
+
       throw new GeneralErrorListenerException("Error starting broker service", e);
+
     }
+
   }
+
 }

@@ -130,6 +130,7 @@ public class PDFSigner {
       this.signChain = signChain;
       this.pdfInputPath = pdfInputPath;
       this.pdfOutputPath = pdfOutputPath;
+
     }
 
     /**
@@ -142,6 +143,7 @@ public class PDFSigner {
 
       location = r;
       return this;
+
     }
 
     /**
@@ -154,6 +156,7 @@ public class PDFSigner {
 
       reason = r;
       return this;
+
     }
 
     /**
@@ -166,6 +169,7 @@ public class PDFSigner {
 
       tsaServerURL = r;
       return this;
+
     }
 
     /**
@@ -178,6 +182,7 @@ public class PDFSigner {
 
       userName = r;
       return this;
+
     }
 
     /**
@@ -186,9 +191,9 @@ public class PDFSigner {
      * @return the PDF signer
      */
     public PDFSigner build() {
-
       return new PDFSigner(this);
     }
+
   }
 
   /**
@@ -208,6 +213,7 @@ public class PDFSigner {
     reason = builder.reason;
     location = builder.location;
     userName = builder.userName;
+
   }
 
   /**
@@ -239,9 +245,12 @@ public class PDFSigner {
       appearance.setCertificate(certificate);
 
       ITSAClient tsaClient = null;
+
       if (tsaServerURL.isPresent()) {
+
         // add tsa stamp
         tsaClient = new TSAClientBouncyCastle(tsaServerURL.get());
+
       }
 
       IOcspClient ocspClient = new OcspClientBouncyCastle(null);
@@ -253,11 +262,15 @@ public class PDFSigner {
           SecurityManager.getPadesEpesProfile(DigestAlgorithms.getAllowedDigest("SHA1"));
 
       if (sigPolicyIdentifier == null) {
+
         signer.signDetached(digest, pks, trustedSignatureChain, listCrl, ocspClient, tsaClient, 0,
-            PdfSigner.CryptoStandard.CADES);
+          PdfSigner.CryptoStandard.CADES);
+
       } else {
+
         signer.signDetached(digest, pks, trustedSignatureChain, listCrl, ocspClient, tsaClient, 0,
-            PdfSigner.CryptoStandard.CADES, sigPolicyIdentifier);
+          PdfSigner.CryptoStandard.CADES, sigPolicyIdentifier);
+
       }
 
       return true;
@@ -282,6 +295,7 @@ public class PDFSigner {
 
       SignatureUtil sigUtil = new SignatureUtil(outDocument);
       PdfPKCS7 pdfPKCS7 = sigUtil.verifySignature(SIGNATURE_NAME_PLACEHOLDER);
+
       return pdfPKCS7.verify();
 
     } catch (IOException except) {
@@ -290,4 +304,5 @@ public class PDFSigner {
 
     return false;
   }
+
 }

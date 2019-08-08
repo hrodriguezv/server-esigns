@@ -1,136 +1,91 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.consultec.esigns</groupId>
-		<artifactId>esigns</artifactId>
-		<version>1.0-SNAPSHOT</version>
-	</parent>
+  <parent>
+    <groupId>com.consultec.esigns</groupId>
+    <artifactId>esigns</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
 
-	<artifactId>com.consultec.esigns.core</artifactId>
-	<packaging>jar</packaging>
+  <artifactId>com.consultec.esigns.core</artifactId>
+  <name>com.consultec.esigns.core</name>
+  <packaging>jar</packaging>
 
-	<name>com.consultec.esigns.core</name>
-	<url>http://maven.apache.org</url>
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<bouncy.version>1.54</bouncy.version>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<maven.compiler.source>1.8</maven.compiler.source>
-	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>5.0.7.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-jms</artifactId>
-			<version>5.0.7.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-			<version>3.8.1</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.rabbitmq</groupId>
-			<artifactId>amqp-client</artifactId>
-			<version>5.2.0</version><!--$NO-MVN-MAN-VER$ -->
-		</dependency>
-		<dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-all</artifactId>
-			<version>5.15.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
-			<version>1.54</version>
-		</dependency>
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.54</version>
-		</dependency>
-		<dependency>
-			<groupId>com.itextpdf</groupId>
-			<artifactId>sign</artifactId>
-			<version>7.0.4</version>
-		</dependency>
-		<dependency>
-			<groupId>net.java.dev.jna</groupId>
-			<artifactId>jna-platform</artifactId>
-			<version>4.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>com.pheox.jcapi</groupId>
-			<artifactId>jcapi</artifactId>
-			<version>2.2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.5.6</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.9.9</version>
-		</dependency>
-	</dependencies>
+  <properties>
+    <commons-io.version>2.1</commons-io.version>
+    <itextpdf.version>7.1.7</itextpdf.version>
+  </properties>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>package</phase>
-						<configuration>
-							<target>
-								<echo>ANT TASK - copying files....</echo>
-								<copy todir="${icepdf.target.folder}/libs" overwrite="true"
-									flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
+  <dependencies>
 
-								<copy todir="${icepdf.target.folder}/core/core-awt/libs"
-									overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
 
-								<copy
-									todir="${icepdf.target.folder}/viewer/viewer-awt/libs"
-									overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jms</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commons-io.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
+      <version>${bouncy.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <version>${bouncy.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>sign</artifactId>
+      <version>${itextpdf.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.pheox.jcapi</groupId>
+      <artifactId>jcapi</artifactId>
+      <version>${jcapi.version}</version>
+    </dependency>
+
+  </dependencies>
+
 </project>

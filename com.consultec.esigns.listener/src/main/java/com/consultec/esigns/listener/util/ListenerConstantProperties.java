@@ -30,8 +30,7 @@ public class ListenerConstantProperties {
   public static final String LOGGED_USER = InetUtility.getLoggedUserNameExt();
 
   /** The Constant reason. */
-  public static final String SIGNATURE_REASON_TEXT = formatter.format(new Object[] {
-      LOGGED_USER});
+  public static final String SIGNATURE_REASON_TEXT = formatter.format(new Object[] {LOGGED_USER});
 
   /** The Constant keystoreAccessMode. */
   public static final String KEYSTORE_ACCESS_MODE =
@@ -47,7 +46,7 @@ public class ListenerConstantProperties {
 
   public static final KeyStoreAccessMode KEYSTORE_ACCESS_CONFIGURED =
       KeyStoreAccessMode.fromString(ListenerConstantProperties.KEYSTORE_ACCESS_MODE);
-  
+
   /**
    * Instantiates a new listener constant properties.
    */
@@ -59,6 +58,7 @@ public class ListenerConstantProperties {
    * Launch client app.
    *
    * @param id the id
+   * 
    * @throws IOException Signals that an I/O exception has occurred.
    * @throws InterruptedException the interrupted exception
    */
@@ -66,7 +66,7 @@ public class ListenerConstantProperties {
 
     String[] cmd = {
         "java",
-        "-Djava.library.path=\"" + ListenerConstantProperties.PDFVIEWER_EXECDEP + "\"",
+        "-Djava.library.path=" + ListenerConstantProperties.PDFVIEWER_EXECDEP,
         "-jar",
         "icepdf-viewer-6.3.1-SNAPSHOT.jar",
         "-sessionid",
@@ -74,11 +74,15 @@ public class ListenerConstantProperties {
 
     SystemCommandExecutor commandExecutor = new SystemCommandExecutor(Arrays.asList(cmd),
         Optional.of(ListenerConstantProperties.PDFVIEWER_EXECPATH));
+
     int exitValue = commandExecutor.executeCommand();
+
     if (exitValue != 0) {
       throw new IOException("Error instanciando el visualizador de PDF's");
     }
+
     return exitValue;
+
   }
 
 }

@@ -58,7 +58,9 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
           g.drawImage(signatureImage, 0, 0, null);
         }
       }
+
     };
+
     drawPanel.setBackground(Color.WHITE);
     drawPanel.setPreferredSize(new Dimension(200, 150));
 
@@ -68,7 +70,9 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
     this.add(panelImage, BorderLayout.WEST);
 
     JButton btnSign = new JButton("Sign");
+
     btnSign.setPreferredSize(new Dimension(100, 50));
+
     btnSign.addActionListener(new ActionListener() {
 
       public void actionPerformed(ActionEvent evt) {
@@ -91,7 +95,7 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
 
     Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
     this.setLocation(dim.width / 2 - this.getSize().width / 2,
-        dim.height / 2 - this.getSize().height / 2);
+      dim.height / 2 - this.getSize().height / 2);
 
     // this.showOnScreen(this);
 
@@ -101,16 +105,18 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
 
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
     GraphicsDevice[] gd = ge.getScreenDevices();
+
     int screen = 1;
+
     if (screen > -1 && screen < gd.length) {
 
       frame.setLocation(gd[screen].getDefaultConfiguration().getBounds().x,
-          gd[screen].getDefaultConfiguration().getBounds().y + frame.getY());
+        gd[screen].getDefaultConfiguration().getBounds().y + frame.getY());
 
     } else if (gd.length > 0) {
 
       frame.setLocation(gd[0].getDefaultConfiguration().getBounds().x,
-          gd[0].getDefaultConfiguration().getBounds().y + frame.getY());
+        gd[0].getDefaultConfiguration().getBounds().y + frame.getY());
 
     } else {
 
@@ -132,7 +138,6 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
       sigCtl.licence("AgAkAMlv5nGdAQVXYWNvbQ1TaWduYXR1cmUgU0RLAgOBAgJkAACIAwEDZQA");
       sigCtl.aboutBox();
 
-
       DynamicCapture dc = new DynamicCapture();
       int rc = dc.capture(sigCtl, "who", "why", null, null);
 
@@ -146,8 +151,9 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
 
         int flags = SigObj.outputFilename | SigObj.color32BPP | SigObj.backgroundTransparent
             | SigObj.encodeData;
+
         sig.renderBitmap(fileName, 200, 150, "image/png", 1.0f, 0xff0000, 0xffffff, 0.0f, 0.0f,
-            flags);
+          flags);
 
         paintSignature(fileName);
 
@@ -156,15 +162,19 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
         textArea.append("signature capture error res=" + rc + "\n");
 
         switch (rc) {
+
           case 1:
+
             textArea.append("Cancelled\n");
             break;
 
           case 100:
+
             textArea.append("Signature tablet not found\n");
             break;
 
           case 103:
+
             textArea.append("Capture not licensed\n");
             break;
 
@@ -178,6 +188,7 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
         }
 
       }
+
     } catch (Error | Exception ex) {
 
       textArea.append("Error " + ex.getMessage() + "\n");
@@ -194,7 +205,7 @@ public class WacomSignatureCaptureDiagnostic extends JFrame implements IStrokeDi
 
     try {
 
-      signatureImage = ImageIO.read(new File("./"+fileName));
+      signatureImage = ImageIO.read(new File("./" + fileName));
       drawPanel.repaint();
 
     } catch (IOException e) {

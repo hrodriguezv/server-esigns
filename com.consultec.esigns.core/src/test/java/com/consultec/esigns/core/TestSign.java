@@ -33,85 +33,83 @@ import com.itextpdf.signatures.TSAClientBouncyCastle;
 
 public class TestSign {
 
-	/** The Constant logger. */
-	private static final Logger logger =
-		LoggerFactory.getLogger(TestSign.class);
+  /** The Constant logger. */
+  private static final Logger logger = LoggerFactory.getLogger(TestSign.class);
 
-	protected static final String BASEPATH = "";
-	protected static final String KEYSTORE = BASEPATH + "keystore.p12";
-	protected static final char[] KEY = "123456".toCharArray();
-	protected static final String PDFIN =
-		BASEPATH + "Holamundo-variaspaginas.pdf";
-	protected static final String PDFOUT = BASEPATH + "file-signed.pdf";
-	protected static final String BACK_IMG = BASEPATH + "sig.png";
+  protected static final String BASEPATH = "";
+  protected static final String KEYSTORE = BASEPATH + "keystore.p12";
+  protected static final char[] KEY = "123456".toCharArray();
+  protected static final String PDFIN = BASEPATH + "Holamundo-variaspaginas.pdf";
+  protected static final String PDFOUT = BASEPATH + "file-signed.pdf";
+  protected static final String BACK_IMG = BASEPATH + "sig.png";
 
-	public static void main(String[] args)
-		throws Exception {
+  public static void main(String[] args) throws Exception {
 
-		String urlTSA = "http://as-demo.bit4id.org/smartengine/tsa";
+    String urlTSA = "http://as-demo.bit4id.org/smartengine/tsa";
 
-		Certificate[] signChain = null;
+    Certificate[] signChain = null;
 
-		Optional<String> nill = Optional.ofNullable(null);
-		KeyStoreAccessMode mode = KeyStoreAccessMode.WINDOWS_MY;
+    Optional<String> nill = Optional.ofNullable(null);
+    KeyStoreAccessMode mode = KeyStoreAccessMode.WINDOWS_MY;
 
-		SecurityManager helper = SecurityManager.getInstance();
-		
-		helper.init(mode, nill, null);
+    SecurityManager helper = SecurityManager.getInstance();
 
-		String alias = helper.getAlias();
-		signChain = helper.getCertificateChainByAlias(alias);
+    helper.init(mode, nill, null);
 
-		ITSAClient tsaClient = new TSAClientBouncyCastle(urlTSA);
-		IOcspClient ocspClient = new OcspClientBouncyCastle(null);
-		List<ICrlClient> listCrl = new ArrayList<>();
-		ICrlClient crl = new CrlClientOnline(signChain);
-		listCrl.add(crl);
-		addLtv(PDFOUT, PDFOUT + ".1", ocspClient, crl, tsaClient);
-	}
+    String alias = helper.getAlias();
+    signChain = helper.getCertificateChainByAlias(alias);
 
-	private static void addLtv(
-		String src, String dest, IOcspClient ocsp, ICrlClient crl,
-		ITSAClient tsa) {
+    ITSAClient tsaClient = new TSAClientBouncyCastle(urlTSA);
+    IOcspClient ocspClient = new OcspClientBouncyCastle(null);
+    List<ICrlClient> listCrl = new ArrayList<>();
+    ICrlClient crl = new CrlClientOnline(signChain);
+    listCrl.add(crl);
+    addLtv(PDFOUT, PDFOUT + ".1", ocspClient, crl, tsaClient);
 
-		
-		try (FileOutputStream fos = new FileOutputStream(dest)){
-			PdfReader r = new PdfReader(src);
-			PdfDocument pdfDoc =
-				new PdfDocument(new PdfReader(src), new PdfWriter(dest));
-			PdfSigner ps = new PdfSigner(r, fos, true);
+  }
 
-			LtvVerification v = new LtvVerification(pdfDoc);
-			SignatureUtil signatureUtil = new SignatureUtil(pdfDoc);
+  private static void addLtv(String src, String dest, IOcspClient ocsp, ICrlClient crl,
+      ITSAClient tsa) {
 
-			List<String> names = signatureUtil.getSignatureNames();
-			String sigName = names.get(names.size() - 1);
-			Provider p = new BouncyCastleProvider();
-			Security.addProvider(p);
-			PdfPKCS7 pkcs7 =
-				signatureUtil.verifySignature(sigName, p.getName());
+    try (FileOutputStream fos = new FileOutputStream(dest)) {
 
-			if (pkcs7.isTsp()) {
-				v.addVerification(
-					sigName, ocsp, crl,
-					LtvVerification.CertificateOption.WHOLE_CHAIN,
-					LtvVerification.Level.CRL,
-					LtvVerification.CertificateInclusion.YES);
-			}
-			else {
-				for (String name : names) {
-					v.addVerification(
-						name, ocsp, crl,
-						LtvVerification.CertificateOption.WHOLE_CHAIN,
-						LtvVerification.Level.OCSP,
-						LtvVerification.CertificateInclusion.YES);
-					v.merge();
-				}
-			}
-			ps.timestamp(tsa, null);
-		}
-		catch (IOException | GeneralSecurityException e) {
-			logger.error(e.getLocalizedMessage());
-		}
-	}
+      PdfReader r = new PdfReader(src);
+      PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
+      PdfSigner ps = new PdfSigner(r, fos, true);
+
+      LtvVerification v = new LtvVerification(pdfDoc);
+      SignatureUtil signatureUtil = new SignatureUtil(pdfDoc);
+
+      List<String> names = signatureUtil.getSignatureNames();
+      String sigName = names.get(names.size() - 1);
+      Provider p = new BouncyCastleProvider();
+      Security.addProvider(p);
+      PdfPKCS7 pkcs7 = signatureUtil.verifySignature(sigName, p.getName());
+
+      if (pkcs7.isTsp()) {
+
+        v.addVerification(sigName, ocsp, crl, LtvVerification.CertificateOption.WHOLE_CHAIN,
+          LtvVerification.Level.CRL, LtvVerification.CertificateInclusion.YES);
+
+      } else {
+
+        for (String name : names) {
+
+          v.addVerification(name, ocsp, crl, LtvVerification.CertificateOption.WHOLE_CHAIN,
+            LtvVerification.Level.OCSP, LtvVerification.CertificateInclusion.YES);
+
+          v.merge();
+
+        }
+
+      }
+
+      ps.timestamp(tsa, null);
+
+    } catch (IOException | GeneralSecurityException e) {
+      logger.error(e.getLocalizedMessage());
+    }
+
+  }
+
 }

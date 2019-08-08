@@ -1,23 +1,23 @@
 package com.consultec.esigns.listener.storage;
 
-import org.springframework.core.io.Resource;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
+
 public interface StorageService {
 
-    void init();
+  void init();
 
-    void store(MultipartFile file);
+  void store(MultipartFile file);
 
-    Stream<Path> loadAll();
+  Stream<Path> loadAll();
 
-    Path load(String filename);
+  Path load(String filename);
 
-    Resource loadAsResource(String filename);
+  Resource loadAsResource(String filename);
 
-    void deleteAll();
+  void deleteAll();
 
 }

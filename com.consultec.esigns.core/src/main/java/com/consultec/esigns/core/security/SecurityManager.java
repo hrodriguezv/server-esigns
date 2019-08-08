@@ -102,14 +102,24 @@ public class SecurityManager {
   public static SecurityManager getInstance() {
 
     SecurityManager result = instance;
+
     if (result == null) {
+
       synchronized (mutex) {
+
         result = instance;
-        if (result == null)
+
+        if (result == null) {
+
           instance = result = new SecurityManager();
+
+        }
+
       }
     }
+
     return result;
+
   }
 
   /**
@@ -129,8 +139,7 @@ public class SecurityManager {
     AlgorithmIdentifier hashAlg = new AlgorithmIdentifier(new ASN1ObjectIdentifier(digest));
     // indicate that the policy hash value is not known; see ETSI TS 101 733
     // V2.2.1, 5.8.1
-    byte[] zeroSigPolicyHash = {
-        0};
+    byte[] zeroSigPolicyHash = {0};
     DEROctetString hash = new DEROctetString(zeroSigPolicyHash);
 
     SignaturePolicyId signaturePolicyId =
@@ -178,6 +187,7 @@ public class SecurityManager {
       case WINDOWS_ROOT:
       case LOCAL_MACHINE:
         return KeyStore.getInstance(mode.getType());
+
       default:
         break;
     }
@@ -375,6 +385,16 @@ public class SecurityManager {
   }
 
   /**
+   * Allows perform the initial process of this singleton and it ensure to set at least a valid
+   * configuration. Otherwise an IllegalStateException is thrown.
+   *
+   * @param mode the mode
+   */
+  public void safeInit(KeyStoreAccessMode mode) {
+    instance.mode = mode;
+  }
+
+  /**
    * Initialize all security objects required to sign documents.
    *
    * @param mode the mode
@@ -478,4 +498,17 @@ public class SecurityManager {
 
     return certificates.get(alias);
   }
+
+  /**
+   * Gets the private key by alias.
+   *
+   * @param alias the alias
+   * @return the private key by alias
+   */
+  public KeyStoreAccessMode getMode() {
+
+    return this.mode;
+
+  }
+
 }

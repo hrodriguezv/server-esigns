@@ -10,18 +10,19 @@ import com.consultec.esigns.strokes.SignaturePadVendor;
  *
  */
 public interface IStrokeSignature {
-	
-	int sign();
-	
-	String getEncodedImage();
-	
-	byte[] getImage();
-	
-	String getEncodedSign();
 
-	void writeImageFile(String dest);
-	
-	SignaturePadVendor getVendor();
-	
-	void setParameters(String author, String reason, String location);
+  int sign();
+
+  String getEncodedImage();
+
+  byte[] getImage();
+
+  String getEncodedSign();
+
+  void writeImageFile(String dest);
+
+  SignaturePadVendor getVendor();
+
+  void setParameters(String author, String reason, String location);
+
 }

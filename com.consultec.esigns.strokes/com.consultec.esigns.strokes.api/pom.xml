@@ -1,68 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.consultec.esigns</groupId>
-		<artifactId>com.consultec.esigns.strokes</artifactId>
-		<version>1.0-SNAPSHOT</version>
-	</parent>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<groupId>com.consultec.esigns.strokes</groupId>
-	<artifactId>com.consultec.esigns.strokes.api</artifactId>
-	<packaging>jar</packaging>
-	<url>http://maven.apache.org</url>
+  <modelVersion>4.0.0</modelVersion>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
+  <parent>
+    <groupId>com.consultec.esigns</groupId>
+    <artifactId>com.consultec.esigns.strokes</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
 
-	<build>
-		
-		<plugins>
-		
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>package</phase>
-						<configuration>
-							<target>
-								<echo>ANT TASK - copying files....</echo>
-								<copy todir="${icepdf.target.folder}/libs" overwrite="true"
-									flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
-
-								<copy todir="${icepdf.target.folder}/core/core-awt/libs"
-									overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
-
-								<copy
-									todir="${icepdf.target.folder}/viewer/viewer-awt/libs"
-									overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="target/*.jar" />
-									</fileset>
-								</copy>
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+  <packaging>jar</packaging>
+  <artifactId>com.consultec.esigns.strokes.api</artifactId>
 
 </project>

@@ -21,7 +21,6 @@ import com.consultec.esigns.core.io.IPostHttpClient;
  */
 public class HttpPostClientImpl implements IPostHttpClient {
 
-
   private String uri;
 
   private HttpEntityEnclosingRequestBase request;
@@ -49,7 +48,7 @@ public class HttpPostClientImpl implements IPostHttpClient {
   @Override
   public void fillHeader(Map<String, List<String>> header) {
     header.keySet().stream().forEach(k -> request.addHeader(k, header.get(k).get(0)));
-    request.removeHeaders("content-length"); 
+    request.removeHeaders("content-length");
   }
 
   @Override

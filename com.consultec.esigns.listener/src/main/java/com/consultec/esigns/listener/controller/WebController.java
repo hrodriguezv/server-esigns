@@ -2,8 +2,6 @@ package com.consultec.esigns.listener.controller;
 
 import static com.consultec.esigns.listener.util.HttpHeadersUtil.getValueFromHeaderKey;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -20,15 +18,15 @@ import com.consultec.esigns.listener.queue.MessageSender;
 import com.consultec.esigns.listener.util.ListenerErrorTreatmentUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * The Class WebController.
  */
+@Slf4j
 @RestController
 @RequestMapping("/files") // RequestMapping for Class
 public class WebController {
-
-  /** The Constant logger. */
-  private static final Logger logger = LoggerFactory.getLogger(WebController.class);
 
   /**
    * Convert the object to a json reference and send it to queue to follow the configured flow.
@@ -36,22 +34,23 @@ public class WebController {
    * @param pobj
    */
   private void receiveFile(PayloadTO pobj) {
-    
+
     try {
-    
+
       // serialize and send package to queue in form of a json object
       ObjectMapper objectMapper = new ObjectMapper();
       String pckg = objectMapper.writeValueAsString(pobj);
 
       MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
-    
+
     } catch (Exception e) {
-    
-      logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
+
+      log.error("Se produjo un error intentando enviar el paquete a la cola", e);
+
       ListenerErrorTreatmentUtil.treatTheError(pobj, e, true);
-    
+
     }
-    
+
   }
 
   /**
@@ -82,10 +81,12 @@ public class WebController {
 
     } catch (Exception e) {
 
-      logger.error("Se produjo un error intentando enviar el paquete a la cola", e);
+      log.error("Se produjo un error intentando enviar el paquete a la cola", e);
+
       ListenerErrorTreatmentUtil.treatTheError(pobj, e, true);
 
     }
+
   }
 
   /**
@@ -93,35 +94,37 @@ public class WebController {
    *
    * @param payload
    * @param headers
+   * 
    * @return
+   * 
    */
   private PayloadTO setDefaultValuesToWrapper(PayloadTO payload, HttpHeaders headers) {
+
     payload.setSessionID(getValueFromHeaderKey(headers, "ngsesid"));
-    payload.setOrigin(getValueFromHeaderKey(headers, "origin"));
     payload.setSerializedObj(headers);
+
     return payload;
+
   }
 
   @RequestMapping(
       value = "/receive",
-      method = {
-          RequestMethod.GET,
-          RequestMethod.POST},
-      consumes = {
-          "application/json"})
+      method = {RequestMethod.GET, RequestMethod.POST},
+      consumes = {"application/json"})
   public void receive(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
+
     receiveFile(setDefaultValuesToWrapper(jsonReference, headers));
+
   }
 
   @RequestMapping(
       value = "/upload",
-      method = {
-          RequestMethod.GET,
-          RequestMethod.POST},
-      consumes = {
-          "application/json"})
+      method = {RequestMethod.GET, RequestMethod.POST},
+      consumes = {"application/json"})
   public void upload(@RequestBody PayloadTO jsonReference, @RequestHeader HttpHeaders headers) {
+
     handleFileUpload(setDefaultValuesToWrapper(jsonReference, headers));
+
   }
 
 }
