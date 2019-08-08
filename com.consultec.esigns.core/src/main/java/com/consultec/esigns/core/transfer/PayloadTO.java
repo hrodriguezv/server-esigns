@@ -30,6 +30,8 @@ public class PayloadTO implements Serializable {
     /** The completed. */
     COMPLETED,
 
+    CANCELLED,
+
     ERROR
 
   }
