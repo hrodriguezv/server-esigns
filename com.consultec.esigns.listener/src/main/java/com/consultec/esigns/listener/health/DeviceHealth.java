@@ -37,7 +37,7 @@ public class DeviceHealth implements HealthIndicator {
 
     } catch (IOException e) {
 
-      log.error("Error getting devices connected", e);
+      log.error("Error getting the connected devices", e);
 
     }
 
