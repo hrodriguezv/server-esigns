@@ -1,37 +1,24 @@
 package com.consultec.esigns.core.io;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * The Enum SignaturePadVendor.
  *
  * @author hrodriguez
  */
+@Getter
+@AllArgsConstructor
 public enum SignaturePadVendor {
 
   /** The wacom. */
-  WACOM("WAC1047"),
+  WACOM("WAC"),
   /** The topaz. */
-  TOPAZ("AHA0001");
+  TOPAZ("AHA");
 
   /** The vendor ID. */
-  private String vendorID;
-
-  /**
-   * Instantiates a new signature pad vendor.
-   *
-   * @param id the vendor
-   */
-  SignaturePadVendor(String id) {
-    this.vendorID = id;
-  }
-
-  /**
-   * Gets the vendor ID.
-   *
-   * @return the vendor ID
-   */
-  public String getVendorID() {
-    return vendorID;
-  }
+  private String vendorPrefix;
 
   /**
    * From string.
@@ -43,7 +30,7 @@ public enum SignaturePadVendor {
 
     for (SignaturePadVendor b : SignaturePadVendor.values()) {
 
-      if (b.vendorID.equalsIgnoreCase(text)) {
+      if (b.vendorPrefix.equalsIgnoreCase(text)) {
         return b;
       }
 
@@ -52,4 +39,5 @@ public enum SignaturePadVendor {
     return null;
 
   }
+
 }

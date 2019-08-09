@@ -1,6 +1,7 @@
 package com.consultec.esigns.listener.health;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -31,9 +32,12 @@ public class DeviceHealth implements HealthIndicator {
   private boolean isDeviceConnected() {
 
     try {
-      //this solution was designed to use a WACOM device by default
-      return WMICUtil.getRawDevicesConnected().stream()
-          .anyMatch(str -> str.equals(SignaturePadVendor.WACOM.getVendorID()));
+
+      List<String> devices = WMICUtil.getRawDevicesConnected();
+
+      // this solution was designed to use a WACOM device by default
+      return devices.stream()
+          .anyMatch(str -> str.startsWith(SignaturePadVendor.WACOM.getVendorPrefix()));
 
     } catch (IOException e) {
 
