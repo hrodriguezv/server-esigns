@@ -1,9 +1,17 @@
 package com.consultec.esigns.listener.health;
 
+import java.io.IOException;
+
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 
+import com.consultec.esigns.core.io.SignaturePadVendor;
+import com.consultec.esigns.core.util.WMICUtil;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class DeviceHealth implements HealthIndicator {
 
@@ -22,7 +30,18 @@ public class DeviceHealth implements HealthIndicator {
 
   private boolean isDeviceConnected() {
 
-    return true;
+    try {
+      //this solution was designed to use a WACOM device by default
+      return WMICUtil.getRawDevicesConnected().stream()
+          .anyMatch(str -> str.equals(SignaturePadVendor.WACOM.getVendorID()));
+
+    } catch (IOException e) {
+
+      log.error("Error getting devices connected", e);
+
+    }
+
+    return false;
 
   }
 

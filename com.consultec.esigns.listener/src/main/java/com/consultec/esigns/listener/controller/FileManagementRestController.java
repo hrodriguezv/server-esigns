@@ -21,12 +21,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * The Class WebController.
+ * The Class FileManagementRestController.
  */
 @Slf4j
 @RestController
 @RequestMapping("/files")
-public class ESignsRestController {
+public class FileManagementRestController {
 
   /**
    * Convert the object to a json reference and send it to queue to follow the configured flow.
