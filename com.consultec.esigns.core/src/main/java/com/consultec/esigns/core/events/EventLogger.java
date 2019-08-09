@@ -112,7 +112,7 @@ public class EventLogger {
 
       int exitValue = commandExecutor.executeCommand();
 
-      log.info("Process exited with value {}", exitValue);
+      log.debug("Process exited with value {}", exitValue);
 
     } catch (IOException e) {
 
@@ -125,6 +125,7 @@ public class EventLogger {
       Thread.currentThread().interrupt();
 
     }
+
   }
 
   /**
@@ -201,4 +202,5 @@ public class EventLogger {
     executeCommand(Operation.WARNING, Origin.APPLICATION, msg);
 
   }
+
 }
