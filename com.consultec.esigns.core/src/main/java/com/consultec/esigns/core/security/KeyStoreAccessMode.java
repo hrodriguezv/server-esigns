@@ -7,8 +7,6 @@ import com.itextpdf.signatures.BouncyCastleDigest;
 import com.itextpdf.signatures.IExternalDigest;
 import com.pheox.jcapi.JCAPIProvider;
 
-import sun.security.mscapi.SunMSCAPI;
-
 /**
  * The Enum KeyStoreAccessMode.
  *
@@ -21,16 +19,18 @@ public enum KeyStoreAccessMode {
   LOCAL_MACHINE(JCAPIProvider.class, new BouncyCastleDigest(), "msks"),
 
   /** The windows my. */
-  WINDOWS_MY(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-MY"),
+  // WINDOWS_MY(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-MY"),
+  WINDOWS_MY(BouncyCastleProvider.class, new BouncyCastleDigest(), "Windows-MY"),
 
   /** The windows root. */
-  WINDOWS_ROOT(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-ROOT"),
+  // WINDOWS_ROOT(SunMSCAPI.class, new BouncyCastleDigest(), "Windows-ROOT"),
+  WINDOWS_ROOT(BouncyCastleProvider.class, new BouncyCastleDigest(), "Windows-ROOT"),
 
   /** The file system. */
   FILE_SYSTEM(BouncyCastleProvider.class, new BouncyCastleDigest(), "pkcs12"),
 
   /** None */
-  NONE(SunMSCAPI.class, new BouncyCastleDigest(), "none");
+  NONE(BouncyCastleProvider.class, new BouncyCastleDigest(), "none");
 
   /** The provider. */
   private Class<?> provider;
