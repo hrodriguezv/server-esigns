@@ -66,9 +66,10 @@ public class ListenerErrorTreatmentUtil {
     } catch (Exception e2) {
 
       msgError = "Error intentando enviar el error de vuelta a Stella sessionid : ["
-          + pobj.getSessionID() + "] - [" + e2.getMessage() + "]";
+          + pobj.getSessionID() + "]";
 
       log.error(msgError, e2);
+
       EventLogger.getInstance().error(msgError);
 
     }

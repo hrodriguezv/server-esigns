@@ -14,148 +14,148 @@ import com.florentis.signature.SigObj;
  */
 public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
 
-	/** The sig ctl. */
-	private SigCtl sigCtl;
+  /** The sig ctl. */
+  private SigCtl sigCtl;
 
-	/** The dc. */
-	private DynamicCapture dc;
+  /** The dc. */
+  private DynamicCapture dc;
 
-	/** The sig. */
-	private SigObj sig;
+  /** The sig. */
+  private SigObj sig;
 
-	/** The reason. */
-	private String reason;
+  /** The reason. */
+  private String reason;
 
-	/** The author. */
-	private String author;
+  /** The author. */
+  private String author;
 
-	/** The location. */
-	@SuppressWarnings("unused")
-	private String location;
+  /** The location. */
+  @SuppressWarnings("unused")
+  private String location;
 
-	/**
-	 * Instantiates a new wacom strokes signature impl.
-	 */
-	public WacomStrokesSignatureImpl() {
-		sigCtl = new SigCtl();
-		dc = new DynamicCapture();
-	}
+  /**
+   * Instantiates a new wacom strokes signature impl.
+   */
+  public WacomStrokesSignatureImpl() {
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.consultec.esigns.strokes.api.IStrokeSignature#sign()
-	 */
-	public int sign() {
-		int rc = dc.capture(
-			this.sigCtl, this.author != null ? this.author : "N/A",
-			this.reason != null ? this.reason : "N/A", null, null);
-		this.sig = this.sigCtl.signature();
-		return rc;
-	}
+    sigCtl = new SigCtl();
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.consultec.esigns.strokes.api.IStrokeSignature#getEncodedSign()
-	 */
-	public String getEncodedSign() {
+    dc = new DynamicCapture();
 
-		String s = this.sig.sigText();
-		return s;
-	}
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.consultec.esigns.strokes.api.IStrokeSignature#getEncodedImage()
-	 */
-	public String getEncodedImage() {
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#sign()
+   */
+  public int sign() {
+    int rc = dc.capture(this.sigCtl, this.author != null ? this.author : "N/A",
+      this.reason != null ? this.reason : "N/A", null, null);
+    this.sig = this.sigCtl.signature();
+    return rc;
+  }
 
-		throw new FeatureNotImplemented(
-			"This feature have not been implemented yet");
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#getEncodedSign()
+   */
+  public String getEncodedSign() {
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.consultec.esigns.strokes.api.IStrokeSignature#getImage()
-	 */
-	public byte[] getImage() {
+    String s = this.sig.sigText();
+    return s;
+  }
 
-		throw new FeatureNotImplemented(
-			"This feature have not been implemented yet");
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#getEncodedImage()
+   */
+  public String getEncodedImage() {
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.consultec.esigns.strokes.api.IStrokeSignature#writeImageFile(java.
-	 * lang. String)
-	 */
-	public void writeImageFile(String dest) {
+    throw new FeatureNotImplemented("This feature have not been implemented yet");
+  }
 
-		int flags = SigObj.outputFilename | SigObj.color32BPP |
-			SigObj.backgroundTransparent | SigObj.encodeData |
-			SigObj.renderRelative;
-		this.sig.renderBitmap(
-			dest, -200, -200, "image/png", 1.0f, 0xff0000, 0xffffff, 0.0f, 0.0f,
-			flags);
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#getImage()
+   */
+  public byte[] getImage() {
 
-	/**
-	 * Sets the reason.
-	 *
-	 * @param reason
-	 *            the new reason
-	 */
-	public void setReason(String reason) {
+    throw new FeatureNotImplemented("This feature have not been implemented yet");
+  }
 
-		this.reason = reason;
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#writeImageFile(java. lang. String)
+   */
+  public void writeImageFile(String dest) {
 
-	/**
-	 * Sets the author.
-	 *
-	 * @param author
-	 *            the new author
-	 */
-	public void setAuthor(String author) {
+    int flags = SigObj.outputFilename | SigObj.color32BPP | SigObj.backgroundTransparent
+        | SigObj.encodeData | SigObj.renderRelative;
+    this.sig.renderBitmap(dest, -200, -200, "image/png", 1.0f, 0xff0000, 0xffffff, 0.0f, 0.0f,
+      flags);
+  }
 
-		this.author = author;
-	}
+  /**
+   * Sets the reason.
+   *
+   * @param reason the new reason
+   */
+  public void setReason(String reason) {
 
-	/**
-	 * Sets the location.
-	 *
-	 * @param location
-	 *            the new location
-	 */
-	public void setLocation(String location) {
+    this.reason = reason;
+  }
 
-		this.location = location;
-	}
+  /**
+   * Sets the author.
+   *
+   * @param author the new author
+   */
+  public void setAuthor(String author) {
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.consultec.esigns.strokes.api.IStrokeSignature#getVendor()
-	 */
-	public SignaturePadVendor getVendor() {
+    this.author = author;
+  }
 
-		return SignaturePadVendor.WACOM;
-	}
+  /**
+   * Sets the location.
+   *
+   * @param location the new location
+   */
+  public void setLocation(String location) {
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.consultec.esigns.strokes.api.IStrokeSignature#setParameters(java.lang
-	 * .String, java.lang.String, java.lang.String)
-	 */
-	@Override
-	public void setParameters(String author, String reason, String location) {
-		this.author = author;
-		this.location = location;
-		this.reason = reason;
-	}
+    this.location = location;
+  }
 
-	@Override
-	public void setLicense(String key) {
-		sigCtl.licence(key);
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#getVendor()
+   */
+  public SignaturePadVendor getVendor() {
+
+    return SignaturePadVendor.WACOM;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.consultec.esigns.strokes.api.IStrokeSignature#setParameters(java.lang .String,
+   * java.lang.String, java.lang.String)
+   */
+  @Override
+  public void setParameters(String author, String reason, String location) {
+    this.author = author;
+    this.location = location;
+    this.reason = reason;
+  }
+
+  @Override
+  public void setLicense(String key) {
+    sigCtl.licence(key);
+  }
+
 }
