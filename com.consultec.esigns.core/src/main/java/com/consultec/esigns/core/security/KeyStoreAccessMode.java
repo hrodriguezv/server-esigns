@@ -35,7 +35,7 @@ public enum KeyStoreAccessMode {
   FILE_SYSTEM(BouncyCastleProvider.class, new BouncyCastleDigest(), "pkcs12"),
 
   /** None */
-  NONE(SunMSCAPI.class, new BouncyCastleDigest(), "none");
+  NONE(BouncyCastleProvider.class, new BouncyCastleDigest(), "none");
 
   /** The provider. */
   private Class<? extends Provider> provider;
