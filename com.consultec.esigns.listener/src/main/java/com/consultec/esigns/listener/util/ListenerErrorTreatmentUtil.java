@@ -69,6 +69,7 @@ public class ListenerErrorTreatmentUtil {
           + pobj.getSessionID() + "]";
 
       log.error(msgError, e2);
+      
       EventLogger.getInstance().error(msgError);
 
     }

@@ -3,11 +3,16 @@
  */
 package com.consultec.esigns.strokes;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * The Enum SignaturePadVendor.
  *
  * @author hrodriguez
  */
+@Getter
+@AllArgsConstructor
 public enum SignaturePadVendor {
 
   /** The wacom. */
@@ -20,35 +25,6 @@ public enum SignaturePadVendor {
 
   /** The fully qualified name. */
   private String fullyQualifiedName;
-
-  /**
-   * Instantiates a new signature pad vendor.
-   *
-   * @param vendor the vendor
-   * @param clazzName the clazz name
-   */
-  SignaturePadVendor(String vendor, String clazzName) {
-    this.vendorID = vendor;
-    this.fullyQualifiedName = clazzName;
-  }
-
-  /**
-   * Gets the vendor ID.
-   *
-   * @return the vendor ID
-   */
-  public String getVendorID() {
-    return vendorID;
-  }
-
-  /**
-   * Gets the fully qualified name.
-   *
-   * @return the fully qualified name
-   */
-  public String getFullyQualifiedName() {
-    return fullyQualifiedName;
-  }
 
   /**
    * From string.

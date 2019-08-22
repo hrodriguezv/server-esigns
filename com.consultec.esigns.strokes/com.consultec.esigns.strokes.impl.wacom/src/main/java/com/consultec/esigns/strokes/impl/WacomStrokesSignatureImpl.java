@@ -90,6 +90,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public byte[] getImage() {
 
     throw new FeatureNotImplemented("This feature have not been implemented yet");
+
   }
 
   /*
