@@ -50,10 +50,14 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
    * @see com.consultec.esigns.strokes.api.IStrokeSignature#sign()
    */
   public int sign() {
+
     int rc = dc.capture(this.sigCtl, this.author != null ? this.author : "N/A",
       this.reason != null ? this.reason : "N/A", null, null);
+
     this.sig = this.sigCtl.signature();
+
     return rc;
+
   }
 
   /*
@@ -63,8 +67,8 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
    */
   public String getEncodedSign() {
 
-    String s = this.sig.sigText();
-    return s;
+    return this.sig.sigText();
+
   }
 
   /*
@@ -75,6 +79,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public String getEncodedImage() {
 
     throw new FeatureNotImplemented("This feature have not been implemented yet");
+
   }
 
   /*
@@ -85,6 +90,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public byte[] getImage() {
 
     throw new FeatureNotImplemented("This feature have not been implemented yet");
+
   }
 
   /*
@@ -96,8 +102,10 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
 
     int flags = SigObj.outputFilename | SigObj.color32BPP | SigObj.backgroundTransparent
         | SigObj.encodeData | SigObj.renderRelative;
+
     this.sig.renderBitmap(dest, -200, -200, "image/png", 1.0f, 0xff0000, 0xffffff, 0.0f, 0.0f,
       flags);
+
   }
 
   /**
@@ -108,6 +116,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public void setReason(String reason) {
 
     this.reason = reason;
+
   }
 
   /**
@@ -118,6 +127,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public void setAuthor(String author) {
 
     this.author = author;
+
   }
 
   /**
@@ -128,6 +138,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public void setLocation(String location) {
 
     this.location = location;
+
   }
 
   /*
@@ -138,6 +149,7 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
   public SignaturePadVendor getVendor() {
 
     return SignaturePadVendor.WACOM;
+
   }
 
   /*
@@ -148,14 +160,18 @@ public class WacomStrokesSignatureImpl implements IStrokeSignatureLicensed {
    */
   @Override
   public void setParameters(String author, String reason, String location) {
+
     this.author = author;
     this.location = location;
     this.reason = reason;
+
   }
 
   @Override
   public void setLicense(String key) {
+
     sigCtl.licence(key);
+
   }
 
 }

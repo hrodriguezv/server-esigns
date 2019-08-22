@@ -51,7 +51,7 @@ public class LauncherClientApp implements Callable<Integer> {
 
     } catch (InterruptedException e) {
 
-      log.error("There was an error trying start the launcher of PDF viewer:[{}]", e.getMessage(),
+      log.error("There was an error trying start the launcher of PDF viewer: [{}]", e.getMessage(),
         e);
 
       EventLogger.getInstance()
