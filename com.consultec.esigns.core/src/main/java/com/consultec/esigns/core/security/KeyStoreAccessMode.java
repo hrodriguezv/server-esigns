@@ -1,12 +1,16 @@
 
 package com.consultec.esigns.core.security;
 
+import java.security.Provider;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.itextpdf.signatures.BouncyCastleDigest;
 import com.itextpdf.signatures.IExternalDigest;
 import com.pheox.jcapi.JCAPIProvider;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import sun.security.mscapi.SunMSCAPI;
 
 /**
@@ -14,7 +18,8 @@ import sun.security.mscapi.SunMSCAPI;
  *
  * @author hrodriguez
  */
-@SuppressWarnings("restriction")
+@Getter
+@AllArgsConstructor
 public enum KeyStoreAccessMode {
 
   /** The local machine. */
@@ -33,57 +38,13 @@ public enum KeyStoreAccessMode {
   NONE(SunMSCAPI.class, new BouncyCastleDigest(), "none");
 
   /** The provider. */
-  private Class<?> provider;
+  private Class<? extends Provider> provider;
 
   /** The digest provider. */
   private IExternalDigest digestProvider;
 
   /** The type. */
   private String type;
-
-  /**
-   * Instantiates a new key store access mode.
-   *
-   * @param p the p
-   * @param ix the ix
-   * @param t the t
-   */
-  private KeyStoreAccessMode(Class<?> p, IExternalDigest ix, String t) {
-
-    this.provider = p;
-    this.digestProvider = ix;
-    this.type = t;
-  }
-
-  /**
-   * Gets the provider.
-   *
-   * @return the provider
-   */
-  public Class<?> getProvider() {
-
-    return provider;
-  }
-
-  /**
-   * Gets the type.
-   *
-   * @return the type
-   */
-  public String getType() {
-
-    return type;
-  }
-
-  /**
-   * Gets the digest provider.
-   *
-   * @return the digest provider
-   */
-  public IExternalDigest getDigestProvider() {
-
-    return digestProvider;
-  }
 
   /**
    * From string.
@@ -94,10 +55,15 @@ public enum KeyStoreAccessMode {
   public static KeyStoreAccessMode fromString(String text) {
 
     for (KeyStoreAccessMode b : KeyStoreAccessMode.values()) {
+
       if (b.type.equalsIgnoreCase(text)) {
         return b;
       }
+
     }
+
     return null;
+
   }
+
 }
