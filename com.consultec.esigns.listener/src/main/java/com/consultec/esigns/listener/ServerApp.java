@@ -60,8 +60,8 @@ public class ServerApp {
 
     } else if (KeyStoreAccessMode.FILE_SYSTEM.equals(KEYSTORE_ACCESS_CONFIGURED)) {
 
-      p12 = Optional.ofNullable(PropertiesManager.getInstance()
-          .getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
+      p12 = Optional.ofNullable(
+        PropertiesManager.getInstance().getValue(PropertiesManager.PROPERTY_OPERATOR_CERTIFICATE));
 
       pwd = PropertiesManager.getInstance().getValue(PropertiesManager.KEY_OPERATOR_CERTIFICATE)
           .toCharArray();

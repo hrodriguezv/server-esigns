@@ -72,7 +72,7 @@ public class MessageHandler implements IMessageHandler {
 
     FileSystemManager manager = FileSystemManager.getInstance();
 
-    Boolean doIt = Boolean
+    Boolean deleteFile = Boolean
         .valueOf(PropertiesManager.getInstance().getValue(PropertiesManager.DELETE_DATA_ON_EXIT));
 
     try {
@@ -154,7 +154,7 @@ public class MessageHandler implements IMessageHandler {
             log.info("Enviando paquete de vuelta a Stella");
 
             MQUtility.sendMessageMQ(QueueConfig.class, MessageSender.class, pckg);
-            manager.deleteOnExit(doIt);
+            manager.deleteOnExit(deleteFile);
 
             break;
 
