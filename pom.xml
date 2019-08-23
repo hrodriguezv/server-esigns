@@ -20,6 +20,7 @@
     <jcapi.version>2.2.0</jcapi.version>
     <bouncy.version>1.54</bouncy.version>
     <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
+    <commons-lang.version>3.9</commons-lang.version>
 
   </properties>
 
