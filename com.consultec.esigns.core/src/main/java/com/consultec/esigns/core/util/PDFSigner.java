@@ -10,12 +10,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.bouncycastle.asn1.esf.SignaturePolicyIdentifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.consultec.esigns.core.security.SecurityManager;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.StampingProperties;
 import com.itextpdf.signatures.CrlClientOnline;
 import com.itextpdf.signatures.DigestAlgorithms;
 import com.itextpdf.signatures.ICrlClient;
@@ -30,15 +29,15 @@ import com.itextpdf.signatures.PdfSigner;
 import com.itextpdf.signatures.SignatureUtil;
 import com.itextpdf.signatures.TSAClientBouncyCastle;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * The Class PDFSigner.
  *
  * @author hrodriguez
  */
+@Slf4j
 public class PDFSigner {
-
-  /** The Constant logger. */
-  private static final Logger logger = LoggerFactory.getLogger(PDFSigner.class);
 
   /** The digest. */
   private final IExternalDigest digest;
@@ -226,8 +225,14 @@ public class PDFSigner {
     try (OutputStream output = new FileOutputStream(pdfOutputPath);
         PdfReader input = new PdfReader(pdfInputPath);) {
 
-      PdfSigner signer = new PdfSigner(input, output, false);
+      StampingProperties props = new StampingProperties();
+
+      props.useAppendMode();
+
+      PdfSigner signer = new PdfSigner(input, output, props);
+
       signer.setFieldName(SIGNATURE_NAME_PLACEHOLDER);
+
       PdfSignatureAppearance appearance = signer.getSignatureAppearance();
 
       if (reason.isPresent()) {
@@ -276,7 +281,9 @@ public class PDFSigner {
       return true;
 
     } catch (IOException except) {
-      logger.error("Error trying to sign a document " + except.getMessage());;
+
+      log.error("Error trying to sign a document.", except);
+
     }
 
     return false;
@@ -294,12 +301,14 @@ public class PDFSigner {
     try (PdfDocument outDocument = new PdfDocument(new PdfReader(pdfOutputPath))) {
 
       SignatureUtil sigUtil = new SignatureUtil(outDocument);
-      PdfPKCS7 pdfPKCS7 = sigUtil.verifySignature(SIGNATURE_NAME_PLACEHOLDER);
+      PdfPKCS7 pdfPKCS7 = sigUtil.readSignatureData(SIGNATURE_NAME_PLACEHOLDER);
 
-      return pdfPKCS7.verify();
+      return pdfPKCS7.verifySignatureIntegrityAndAuthenticity();
 
     } catch (IOException except) {
-      logger.error("Error trying to sign a document " + except.getMessage());;
+
+      log.error("Error trying to sign a document.", except);
+
     }
 
     return false;

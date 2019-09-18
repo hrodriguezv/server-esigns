@@ -32,7 +32,11 @@ public class PayloadTO implements Serializable {
 
     CANCELLED,
 
-    ERROR
+    ERROR,
+    
+    CERTIFICATE_ERROR,
+    
+    REPOSITORY_ERROR
 
   }
 
@@ -71,5 +75,15 @@ public class PayloadTO implements Serializable {
 
   /** The code. */
   private String code;
+
+  /**
+   * Numero de ente del cliente.
+   */
+  private int entityId;
+
+  /**
+   * Extension del archivo.
+   */
+  private String fileExtension;
 
 }
