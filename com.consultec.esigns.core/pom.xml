@@ -14,7 +14,7 @@
   <packaging>jar</packaging>
 
   <properties>
-    <commons-io.version>2.1</commons-io.version>
+    <commons-io.version>2.7</commons-io.version>
     <itextpdf.version>7.1.7</itextpdf.version>
   </properties>
 
